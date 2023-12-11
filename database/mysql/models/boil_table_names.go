@@ -6,12 +6,14 @@ package models
 var TableNames = struct {
 	Notification        string
 	NotificationData    string
+	NotificationGifUrls string
 	NotificationImgUrls string
 	NotificationPacks   string
 	Users               string
 }{
 	Notification:        "notification",
 	NotificationData:    "notification_data",
+	NotificationGifUrls: "notification_gif_urls",
 	NotificationImgUrls: "notification_img_urls",
 	NotificationPacks:   "notification_packs",
 	Users:               "users",

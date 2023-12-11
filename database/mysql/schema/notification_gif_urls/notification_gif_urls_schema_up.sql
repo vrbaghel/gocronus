@@ -1,0 +1,9 @@
+CREATE TABLE `notification_gif_urls` (
+  id INT NOT NULL UNIQUE AUTO_INCREMENT,
+  nd_id INT NOT NULL,
+  ngu_url TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`nd_id`) REFERENCES `notification_data` (`id`)
+);

@@ -140,10 +140,12 @@ var NotificationDatumWhere = struct {
 // NotificationDatumRels is where relationship names are stored.
 var NotificationDatumRels = struct {
 	N                     string
+	NDNotificationGifUrls string
 	NDNotificationImgUrls string
 	NDNotificationPacks   string
 }{
 	N:                     "N",
+	NDNotificationGifUrls: "NDNotificationGifUrls",
 	NDNotificationImgUrls: "NDNotificationImgUrls",
 	NDNotificationPacks:   "NDNotificationPacks",
 }
@@ -151,6 +153,7 @@ var NotificationDatumRels = struct {
 // notificationDatumR is where relationships are stored.
 type notificationDatumR struct {
 	N                     *Notification           `boil:"N" json:"N" toml:"N" yaml:"N"`
+	NDNotificationGifUrls NotificationGifURLSlice `boil:"NDNotificationGifUrls" json:"NDNotificationGifUrls" toml:"NDNotificationGifUrls" yaml:"NDNotificationGifUrls"`
 	NDNotificationImgUrls NotificationImgURLSlice `boil:"NDNotificationImgUrls" json:"NDNotificationImgUrls" toml:"NDNotificationImgUrls" yaml:"NDNotificationImgUrls"`
 	NDNotificationPacks   NotificationPackSlice   `boil:"NDNotificationPacks" json:"NDNotificationPacks" toml:"NDNotificationPacks" yaml:"NDNotificationPacks"`
 }
@@ -272,6 +275,27 @@ func (o *NotificationDatum) N(mods ...qm.QueryMod) notificationQuery {
 
 	query := Notifications(queryMods...)
 	queries.SetFrom(query.Query, "`notification`")
+
+	return query
+}
+
+// NDNotificationGifUrls retrieves all the notification_gif_url's NotificationGifUrls with an executor via nd_id column.
+func (o *NotificationDatum) NDNotificationGifUrls(mods ...qm.QueryMod) notificationGifURLQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`notification_gif_urls`.`nd_id`=?", o.ID),
+	)
+
+	query := NotificationGifUrls(queryMods...)
+	queries.SetFrom(query.Query, "`notification_gif_urls`")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"`notification_gif_urls`.*"})
+	}
 
 	return query
 }
@@ -398,6 +422,87 @@ func (notificationDatumL) LoadN(ctx context.Context, e boil.ContextExecutor, sin
 		for _, foreign := range resultSlice {
 			if local.NID == foreign.ID {
 				local.R.N = foreign
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadNDNotificationGifUrls allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (notificationDatumL) LoadNDNotificationGifUrls(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationDatum interface{}, mods queries.Applicator) error {
+	var slice []*NotificationDatum
+	var object *NotificationDatum
+
+	if singular {
+		object = maybeNotificationDatum.(*NotificationDatum)
+	} else {
+		slice = *maybeNotificationDatum.(*[]*NotificationDatum)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &notificationDatumR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &notificationDatumR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`notification_gif_urls`),
+		qm.WhereIn(`notification_gif_urls.nd_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load notification_gif_urls")
+	}
+
+	var resultSlice []*NotificationGifURL
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice notification_gif_urls")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on notification_gif_urls")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for notification_gif_urls")
+	}
+
+	if singular {
+		object.R.NDNotificationGifUrls = resultSlice
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.NDID {
+				local.R.NDNotificationGifUrls = append(local.R.NDNotificationGifUrls, foreign)
 				break
 			}
 		}
@@ -612,6 +717,59 @@ func (o *NotificationDatum) SetN(ctx context.Context, exec boil.ContextExecutor,
 		related.R.NNotificationData = append(related.R.NNotificationData, o)
 	}
 
+	return nil
+}
+
+// AddNDNotificationGifUrls adds the given related objects to the existing relationships
+// of the notification_datum, optionally inserting them as new records.
+// Appends related to o.R.NDNotificationGifUrls.
+// Sets related.R.ND appropriately.
+func (o *NotificationDatum) AddNDNotificationGifUrls(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NotificationGifURL) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.NDID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `notification_gif_urls` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"nd_id"}),
+				strmangle.WhereClause("`", "`", 0, notificationGifURLPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.NDID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &notificationDatumR{
+			NDNotificationGifUrls: related,
+		}
+	} else {
+		o.R.NDNotificationGifUrls = append(o.R.NDNotificationGifUrls, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &notificationGifURLR{
+				ND: o,
+			}
+		} else {
+			rel.R.ND = o
+		}
+	}
 	return nil
 }
 
