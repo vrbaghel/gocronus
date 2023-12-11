@@ -24,11 +24,8 @@ func readENV() (*ENV, error) {
 	rtSecret := os.Getenv("REFRESH_TOKEN_SECRET")
 	rtExpiration, errRtExpiration := strconv.Atoi(os.Getenv("REFRESH_TOKEN_EXPIRATION"))
 
-	infBaseURL := os.Getenv("INFERENCE_BASE_URL")
-	maleModelsA := strings.Split(os.Getenv("MALE_MODELS_ADULT"), ",")
-	femaleModelsA := strings.Split(os.Getenv("FEMALE_MODELS_ADULT"), ",")
-	maleModelsK := strings.Split(os.Getenv("MALE_MODELS_KID"), ",")
-	femaleModelsK := strings.Split(os.Getenv("FEMALE_MODELS_KID"), ",")
+	fcmNotificationURL := os.Getenv("FCM_NOTIFICATION_URL")
+	fcmNotificationActions := strings.Split(os.Getenv("FCM_NOTIFICATION_ACTIONS"), ",")
 
 	errSlice = append(errSlice, errServerLogLevel, errMySQLConnectionMaxOpen, errMySQLConnectionMaxIdle, errHttpServerPort, errServerTimeoutReadSeconds, errServerTimeoutWriteSeconds, errServerTimeoutShutdownSeconds, errAtExpiration, errRtExpiration)
 
@@ -49,10 +46,7 @@ func readENV() (*ENV, error) {
 		ACCESS_TOKEN_EXPIRATION:         atExpiration,
 		REFRESH_TOKEN_SECRET:            rtSecret,
 		REFRESH_TOKEN_EXPIRATION:        rtExpiration,
-		INFERENCE_BASE_URL:              infBaseURL,
-		MALE_MODELS_ADULT:               maleModelsA,
-		FEMALE_MODELS_ADULT:             femaleModelsA,
-		MALE_MODELS_KID:                 maleModelsK,
-		FEMALE_MODELS_KID:               femaleModelsK,
+		FCM_NOTIFICATION_URL:            fcmNotificationURL,
+		FCM_NOTIFICATION_ACTIONS:        fcmNotificationActions,
 	}, nil
 }

@@ -13,9 +13,6 @@ type ENV struct {
 	REFRESH_TOKEN_SECRET            string
 	ACCESS_TOKEN_EXPIRATION         int
 	REFRESH_TOKEN_EXPIRATION        int
-	INFERENCE_BASE_URL              string
-	MALE_MODELS_ADULT               []string
-	FEMALE_MODELS_ADULT             []string
-	MALE_MODELS_KID                 []string
-	FEMALE_MODELS_KID               []string
+	FCM_NOTIFICATION_URL            string
+	FCM_NOTIFICATION_ACTIONS        []string
 }
