@@ -1,12 +1,12 @@
 wipe = true
-output   = "./../../../api/models"
+output   = "./../models"
 add-soft-deletes    = true
 no-back-referencing = true
 no-hooks = true
 no-tests = true
 
 [mysql]
-  dbname  = "nchronus"
+  dbname  = "ncronus"
   host    = "localhost"
   user    = "root"
   pass    = "adminimda"
