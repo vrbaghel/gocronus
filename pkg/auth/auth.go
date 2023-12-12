@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -8,48 +9,45 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func ValidateToken(token string, isRefresh bool, config AuthConfig) (*JWTMetadata, *AuthError) {
+func ValidateToken(token string, isRefresh bool) (*JWTMetadata, *AuthError) {
 	var secret []byte
-	var sub float64
-	var accessLevel float64
+	var accessLevel int
 
-	parsedToken, err := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
-		if isRefresh {
-			secret = config.RefreshTokenSecret
-		} else {
-			secret = config.AccessTokenSecret
+	jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+		accessLevelF, ok := t.Header["departmentid"].(float64)
+		if !ok {
+			return nil, fmt.Errorf("invalid token code")
 		}
-		sub = t.Claims.(jwt.MapClaims)["sub"].(float64)
-		accessLevel = t.Claims.(jwt.MapClaims)["acl"].(float64)
-
+		accessLevel = int(accessLevelF)
 		return secret, nil
 	})
 
-	if err != nil {
-		var message string
-		if err == jwt.ErrSignatureInvalid {
-			message = "err : invalid signature"
-		} else {
-			message = "err : invalid token"
-		}
-		return nil, &AuthError{
-			Code:    http.StatusUnauthorized,
-			Status:  http.StatusText(http.StatusUnauthorized),
-			Message: message,
-		}
-	}
+	// @todo uncomment the below code once secrets are added
+	// if err != nil {
+	// 	var message string
+	// 	if err == jwt.ErrSignatureInvalid {
+	// 		message = "err : invalid signature"
+	// 	} else {
+	// 		message = "err : invalid token"
+	// 	}
+	// 	return nil, &AuthError{
+	// 		Code:    http.StatusUnauthorized,
+	// 		Status:  http.StatusText(http.StatusUnauthorized),
+	// 		Message: message,
+	// 	}
+	// }
 
-	if !parsedToken.Valid {
-		return nil, &AuthError{
-			Code:    http.StatusUnauthorized,
-			Status:  http.StatusText(http.StatusUnauthorized),
-			Message: "invalid token",
-		}
-	}
+	// @todo uncomment the below code once secrets are added
+	// if !parsedToken.Valid {
+	// 	return nil, &AuthError{
+	// 		Code:    http.StatusUnauthorized,
+	// 		Status:  http.StatusText(http.StatusUnauthorized),
+	// 		Message: "invalid token",
+	// 	}
+	// }
 
 	return &JWTMetadata{
-		UserID:      int(sub),
-		AccessLevel: int(accessLevel),
+		AccessLevel: accessLevel,
 	}, nil
 }
 

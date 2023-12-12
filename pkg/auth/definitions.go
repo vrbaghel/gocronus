@@ -8,7 +8,6 @@ type JWT struct {
 }
 
 type JWTMetadata struct {
-	UserID      int
 	AccessLevel int
 }
 

@@ -16,7 +16,7 @@ func RegisterEndpoints(routineEngine *gin.Engine, handlerParams handler.HandlerP
 	// login API
 	// api.POST("/user/login", handler.Login)
 
-	notification := api.Group("notification")
+	notification := api.Group("notification", handler.AuthMiddleware)
 	// get actions
 	notification.GET("/actions", handler.GetNotiticationActions)
 	// get notifications

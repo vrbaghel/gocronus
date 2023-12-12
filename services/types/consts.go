@@ -18,3 +18,8 @@ var NDNAVTYPE_TO_NAVTYPE_MAP map[string]int = map[string]int{
 }
 
 const NOTIFICATION_DEFAULT_ACTION = "ViewImageAction"
+
+const (
+	ACCESS_SUPER   = 1
+	ACCESS_LIMITED = 5
+)
