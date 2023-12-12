@@ -25,7 +25,6 @@ import (
 // NotificationPack is an object representing the database table.
 type NotificationPack struct {
 	ID         int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	NDID       int         `boil:"nd_id" json:"nd_id" toml:"nd_id" yaml:"nd_id"`
 	NPID       null.String `boil:"np_id" json:"np_id,omitempty" toml:"np_id" yaml:"np_id,omitempty"`
 	NPOrderID  null.String `boil:"np_order_id" json:"np_order_id,omitempty" toml:"np_order_id" yaml:"np_order_id,omitempty"`
 	NPFilterID null.String `boil:"np_filter_id" json:"np_filter_id,omitempty" toml:"np_filter_id" yaml:"np_filter_id,omitempty"`
@@ -40,7 +39,6 @@ type NotificationPack struct {
 
 var NotificationPackColumns = struct {
 	ID         string
-	NDID       string
 	NPID       string
 	NPOrderID  string
 	NPFilterID string
@@ -50,7 +48,6 @@ var NotificationPackColumns = struct {
 	UpdatedAt  string
 }{
 	ID:         "id",
-	NDID:       "nd_id",
 	NPID:       "np_id",
 	NPOrderID:  "np_order_id",
 	NPFilterID: "np_filter_id",
@@ -62,7 +59,6 @@ var NotificationPackColumns = struct {
 
 var NotificationPackTableColumns = struct {
 	ID         string
-	NDID       string
 	NPID       string
 	NPOrderID  string
 	NPFilterID string
@@ -71,22 +67,20 @@ var NotificationPackTableColumns = struct {
 	CreatedAt  string
 	UpdatedAt  string
 }{
-	ID:         "notification_packs.id",
-	NDID:       "notification_packs.nd_id",
-	NPID:       "notification_packs.np_id",
-	NPOrderID:  "notification_packs.np_order_id",
-	NPFilterID: "notification_packs.np_filter_id",
-	NPToolID:   "notification_packs.np_tool_id",
-	NPName:     "notification_packs.np_name",
-	CreatedAt:  "notification_packs.created_at",
-	UpdatedAt:  "notification_packs.updated_at",
+	ID:         "notification_pack.id",
+	NPID:       "notification_pack.np_id",
+	NPOrderID:  "notification_pack.np_order_id",
+	NPFilterID: "notification_pack.np_filter_id",
+	NPToolID:   "notification_pack.np_tool_id",
+	NPName:     "notification_pack.np_name",
+	CreatedAt:  "notification_pack.created_at",
+	UpdatedAt:  "notification_pack.updated_at",
 }
 
 // Generated where
 
 var NotificationPackWhere = struct {
 	ID         whereHelperint
-	NDID       whereHelperint
 	NPID       whereHelpernull_String
 	NPOrderID  whereHelpernull_String
 	NPFilterID whereHelpernull_String
@@ -95,27 +89,26 @@ var NotificationPackWhere = struct {
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
 }{
-	ID:         whereHelperint{field: "`notification_packs`.`id`"},
-	NDID:       whereHelperint{field: "`notification_packs`.`nd_id`"},
-	NPID:       whereHelpernull_String{field: "`notification_packs`.`np_id`"},
-	NPOrderID:  whereHelpernull_String{field: "`notification_packs`.`np_order_id`"},
-	NPFilterID: whereHelpernull_String{field: "`notification_packs`.`np_filter_id`"},
-	NPToolID:   whereHelpernull_String{field: "`notification_packs`.`np_tool_id`"},
-	NPName:     whereHelpernull_String{field: "`notification_packs`.`np_name`"},
-	CreatedAt:  whereHelpertime_Time{field: "`notification_packs`.`created_at`"},
-	UpdatedAt:  whereHelpertime_Time{field: "`notification_packs`.`updated_at`"},
+	ID:         whereHelperint{field: "`notification_pack`.`id`"},
+	NPID:       whereHelpernull_String{field: "`notification_pack`.`np_id`"},
+	NPOrderID:  whereHelpernull_String{field: "`notification_pack`.`np_order_id`"},
+	NPFilterID: whereHelpernull_String{field: "`notification_pack`.`np_filter_id`"},
+	NPToolID:   whereHelpernull_String{field: "`notification_pack`.`np_tool_id`"},
+	NPName:     whereHelpernull_String{field: "`notification_pack`.`np_name`"},
+	CreatedAt:  whereHelpertime_Time{field: "`notification_pack`.`created_at`"},
+	UpdatedAt:  whereHelpertime_Time{field: "`notification_pack`.`updated_at`"},
 }
 
 // NotificationPackRels is where relationship names are stored.
 var NotificationPackRels = struct {
-	ND string
+	IDNotificationDatum string
 }{
-	ND: "ND",
+	IDNotificationDatum: "IDNotificationDatum",
 }
 
 // notificationPackR is where relationships are stored.
 type notificationPackR struct {
-	ND *NotificationDatum `boil:"ND" json:"ND" toml:"ND" yaml:"ND"`
+	IDNotificationDatum *NotificationDatum `boil:"IDNotificationDatum" json:"IDNotificationDatum" toml:"IDNotificationDatum" yaml:"IDNotificationDatum"`
 }
 
 // NewStruct creates a new relationship struct
@@ -127,9 +120,9 @@ func (*notificationPackR) NewStruct() *notificationPackR {
 type notificationPackL struct{}
 
 var (
-	notificationPackAllColumns            = []string{"id", "nd_id", "np_id", "np_order_id", "np_filter_id", "np_tool_id", "np_name", "created_at", "updated_at"}
-	notificationPackColumnsWithoutDefault = []string{"nd_id", "np_id", "np_order_id", "np_filter_id", "np_tool_id", "np_name"}
-	notificationPackColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	notificationPackAllColumns            = []string{"id", "np_id", "np_order_id", "np_filter_id", "np_tool_id", "np_name", "created_at", "updated_at"}
+	notificationPackColumnsWithoutDefault = []string{"id", "np_id", "np_order_id", "np_filter_id", "np_tool_id", "np_name"}
+	notificationPackColumnsWithDefault    = []string{"created_at", "updated_at"}
 	notificationPackPrimaryKeyColumns     = []string{"id"}
 	notificationPackGeneratedColumns      = []string{}
 )
@@ -176,7 +169,7 @@ func (q notificationPackQuery) One(ctx context.Context, exec boil.ContextExecuto
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: failed to execute a one query for notification_packs")
+		return nil, errors.Wrap(err, "models: failed to execute a one query for notification_pack")
 	}
 
 	return o, nil
@@ -203,7 +196,7 @@ func (q notificationPackQuery) Count(ctx context.Context, exec boil.ContextExecu
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to count notification_packs rows")
+		return 0, errors.Wrap(err, "models: failed to count notification_pack rows")
 	}
 
 	return count, nil
@@ -219,16 +212,16 @@ func (q notificationPackQuery) Exists(ctx context.Context, exec boil.ContextExec
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "models: failed to check if notification_packs exists")
+		return false, errors.Wrap(err, "models: failed to check if notification_pack exists")
 	}
 
 	return count > 0, nil
 }
 
-// ND pointed to by the foreign key.
-func (o *NotificationPack) ND(mods ...qm.QueryMod) notificationDatumQuery {
+// IDNotificationDatum pointed to by the foreign key.
+func (o *NotificationPack) IDNotificationDatum(mods ...qm.QueryMod) notificationDatumQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("`id` = ?", o.NDID),
+		qm.Where("`id` = ?", o.ID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -239,9 +232,9 @@ func (o *NotificationPack) ND(mods ...qm.QueryMod) notificationDatumQuery {
 	return query
 }
 
-// LoadND allows an eager lookup of values, cached into the
+// LoadIDNotificationDatum allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (notificationPackL) LoadND(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationPack interface{}, mods queries.Applicator) error {
+func (notificationPackL) LoadIDNotificationDatum(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationPack interface{}, mods queries.Applicator) error {
 	var slice []*NotificationPack
 	var object *NotificationPack
 
@@ -256,7 +249,7 @@ func (notificationPackL) LoadND(ctx context.Context, e boil.ContextExecutor, sin
 		if object.R == nil {
 			object.R = &notificationPackR{}
 		}
-		args = append(args, object.NDID)
+		args = append(args, object.ID)
 
 	} else {
 	Outer:
@@ -266,12 +259,12 @@ func (notificationPackL) LoadND(ctx context.Context, e boil.ContextExecutor, sin
 			}
 
 			for _, a := range args {
-				if a == obj.NDID {
+				if a == obj.ID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.NDID)
+			args = append(args, obj.ID)
 
 		}
 	}
@@ -311,14 +304,14 @@ func (notificationPackL) LoadND(ctx context.Context, e boil.ContextExecutor, sin
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.ND = foreign
+		object.R.IDNotificationDatum = foreign
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.NDID == foreign.ID {
-				local.R.ND = foreign
+			if local.ID == foreign.ID {
+				local.R.IDNotificationDatum = foreign
 				break
 			}
 		}
@@ -327,10 +320,10 @@ func (notificationPackL) LoadND(ctx context.Context, e boil.ContextExecutor, sin
 	return nil
 }
 
-// SetND of the notificationPack to the related item.
-// Sets o.R.ND to related.
-// Adds o to related.R.NDNotificationPacks.
-func (o *NotificationPack) SetND(ctx context.Context, exec boil.ContextExecutor, insert bool, related *NotificationDatum) error {
+// SetIDNotificationDatum of the notificationPack to the related item.
+// Sets o.R.IDNotificationDatum to related.
+// Adds o to related.R.IDNotificationPack.
+func (o *NotificationPack) SetIDNotificationDatum(ctx context.Context, exec boil.ContextExecutor, insert bool, related *NotificationDatum) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -339,8 +332,8 @@ func (o *NotificationPack) SetND(ctx context.Context, exec boil.ContextExecutor,
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE `notification_packs` SET %s WHERE %s",
-		strmangle.SetParamNames("`", "`", 0, []string{"nd_id"}),
+		"UPDATE `notification_pack` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"id"}),
 		strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -354,21 +347,21 @@ func (o *NotificationPack) SetND(ctx context.Context, exec boil.ContextExecutor,
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.NDID = related.ID
+	o.ID = related.ID
 	if o.R == nil {
 		o.R = &notificationPackR{
-			ND: related,
+			IDNotificationDatum: related,
 		}
 	} else {
-		o.R.ND = related
+		o.R.IDNotificationDatum = related
 	}
 
 	if related.R == nil {
 		related.R = &notificationDatumR{
-			NDNotificationPacks: NotificationPackSlice{o},
+			IDNotificationPack: o,
 		}
 	} else {
-		related.R.NDNotificationPacks = append(related.R.NDNotificationPacks, o)
+		related.R.IDNotificationPack = o
 	}
 
 	return nil
@@ -376,7 +369,7 @@ func (o *NotificationPack) SetND(ctx context.Context, exec boil.ContextExecutor,
 
 // NotificationPacks retrieves all the records using an executor.
 func NotificationPacks(mods ...qm.QueryMod) notificationPackQuery {
-	mods = append(mods, qm.From("`notification_packs`"))
+	mods = append(mods, qm.From("`notification_pack`"))
 	return notificationPackQuery{NewQuery(mods...)}
 }
 
@@ -390,7 +383,7 @@ func FindNotificationPack(ctx context.Context, exec boil.ContextExecutor, iD int
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `notification_packs` where `id`=?", sel,
+		"select %s from `notification_pack` where `id`=?", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -400,7 +393,7 @@ func FindNotificationPack(ctx context.Context, exec boil.ContextExecutor, iD int
 		if errors.Cause(err) == sql.ErrNoRows {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "models: unable to select from notification_packs")
+		return nil, errors.Wrap(err, "models: unable to select from notification_pack")
 	}
 
 	return notificationPackObj, nil
@@ -410,7 +403,7 @@ func FindNotificationPack(ctx context.Context, exec boil.ContextExecutor, iD int
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *NotificationPack) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no notification_packs provided for insertion")
+		return errors.New("models: no notification_pack provided for insertion")
 	}
 
 	var err error
@@ -449,15 +442,15 @@ func (o *NotificationPack) Insert(ctx context.Context, exec boil.ContextExecutor
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `notification_packs` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `notification_pack` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `notification_packs` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `notification_pack` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `notification_packs` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `notification_pack` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -471,26 +464,15 @@ func (o *NotificationPack) Insert(ctx context.Context, exec boil.ContextExecutor
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	result, err := exec.ExecContext(ctx, cache.query, vals...)
+	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to insert into notification_packs")
+		return errors.Wrap(err, "models: unable to insert into notification_pack")
 	}
 
-	var lastID int64
 	var identifierCols []interface{}
 
 	if len(cache.retMapping) == 0 {
-		goto CacheNoHooks
-	}
-
-	lastID, err = result.LastInsertId()
-	if err != nil {
-		return ErrSyncFail
-	}
-
-	o.ID = int(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == notificationPackMapping["id"] {
 		goto CacheNoHooks
 	}
 
@@ -505,7 +487,7 @@ func (o *NotificationPack) Insert(ctx context.Context, exec boil.ContextExecutor
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for notification_packs")
+		return errors.Wrap(err, "models: unable to populate default values for notification_pack")
 	}
 
 CacheNoHooks:
@@ -544,10 +526,10 @@ func (o *NotificationPack) Update(ctx context.Context, exec boil.ContextExecutor
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
 		if len(wl) == 0 {
-			return 0, errors.New("models: unable to update notification_packs, could not build whitelist")
+			return 0, errors.New("models: unable to update notification_pack, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `notification_packs` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `notification_pack` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns),
 		)
@@ -567,12 +549,12 @@ func (o *NotificationPack) Update(ctx context.Context, exec boil.ContextExecutor
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update notification_packs row")
+		return 0, errors.Wrap(err, "models: unable to update notification_pack row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by update for notification_packs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by update for notification_pack")
 	}
 
 	if !cached {
@@ -590,12 +572,12 @@ func (q notificationPackQuery) UpdateAll(ctx context.Context, exec boil.ContextE
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to update all for notification_packs")
+		return 0, errors.Wrap(err, "models: unable to update all for notification_pack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for notification_packs")
+		return 0, errors.Wrap(err, "models: unable to retrieve rows affected for notification_pack")
 	}
 
 	return rowsAff, nil
@@ -628,7 +610,7 @@ func (o NotificationPackSlice) UpdateAll(ctx context.Context, exec boil.ContextE
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `notification_packs` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `notification_pack` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, notificationPackPrimaryKeyColumns, len(o)))
 
@@ -657,7 +639,7 @@ var mySQLNotificationPackUniqueColumns = []string{
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *NotificationPack) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("models: no notification_packs provided for upsert")
+		return errors.New("models: no notification_pack provided for upsert")
 	}
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
@@ -717,13 +699,13 @@ func (o *NotificationPack) Upsert(ctx context.Context, exec boil.ContextExecutor
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("models: unable to upsert notification_packs, could not build update column list")
+			return errors.New("models: unable to upsert notification_pack, could not build update column list")
 		}
 
 		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`notification_packs`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`notification_pack`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `notification_packs` WHERE %s",
+			"SELECT %s FROM `notification_pack` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -752,13 +734,12 @@ func (o *NotificationPack) Upsert(ctx context.Context, exec boil.ContextExecutor
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	result, err := exec.ExecContext(ctx, cache.query, vals...)
+	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "models: unable to upsert for notification_packs")
+		return errors.Wrap(err, "models: unable to upsert for notification_pack")
 	}
 
-	var lastID int64
 	var uniqueMap []uint64
 	var nzUniqueCols []interface{}
 
@@ -766,19 +747,9 @@ func (o *NotificationPack) Upsert(ctx context.Context, exec boil.ContextExecutor
 		goto CacheNoHooks
 	}
 
-	lastID, err = result.LastInsertId()
-	if err != nil {
-		return ErrSyncFail
-	}
-
-	o.ID = int(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == notificationPackMapping["id"] {
-		goto CacheNoHooks
-	}
-
 	uniqueMap, err = queries.BindMapping(notificationPackType, notificationPackMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to retrieve unique values for notification_packs")
+		return errors.Wrap(err, "models: unable to retrieve unique values for notification_pack")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -789,7 +760,7 @@ func (o *NotificationPack) Upsert(ctx context.Context, exec boil.ContextExecutor
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "models: unable to populate default values for notification_packs")
+		return errors.Wrap(err, "models: unable to populate default values for notification_pack")
 	}
 
 CacheNoHooks:
@@ -810,7 +781,7 @@ func (o *NotificationPack) Delete(ctx context.Context, exec boil.ContextExecutor
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), notificationPackPrimaryKeyMapping)
-	sql := "DELETE FROM `notification_packs` WHERE `id`=?"
+	sql := "DELETE FROM `notification_pack` WHERE `id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -819,12 +790,12 @@ func (o *NotificationPack) Delete(ctx context.Context, exec boil.ContextExecutor
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete from notification_packs")
+		return 0, errors.Wrap(err, "models: unable to delete from notification_pack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for notification_packs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by delete for notification_pack")
 	}
 
 	return rowsAff, nil
@@ -840,12 +811,12 @@ func (q notificationPackQuery) DeleteAll(ctx context.Context, exec boil.ContextE
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "models: unable to delete all from notification_packs")
+		return 0, errors.Wrap(err, "models: unable to delete all from notification_pack")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for notification_packs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for notification_pack")
 	}
 
 	return rowsAff, nil
@@ -863,7 +834,7 @@ func (o NotificationPackSlice) DeleteAll(ctx context.Context, exec boil.ContextE
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `notification_packs` WHERE " +
+	sql := "DELETE FROM `notification_pack` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, notificationPackPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -878,7 +849,7 @@ func (o NotificationPackSlice) DeleteAll(ctx context.Context, exec boil.ContextE
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for notification_packs")
+		return 0, errors.Wrap(err, "models: failed to get rows affected by deleteall for notification_pack")
 	}
 
 	return rowsAff, nil
@@ -910,7 +881,7 @@ func (o *NotificationPackSlice) ReloadAll(ctx context.Context, exec boil.Context
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `notification_packs`.* FROM `notification_packs` WHERE " +
+	sql := "SELECT `notification_pack`.* FROM `notification_pack` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, notificationPackPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -928,7 +899,7 @@ func (o *NotificationPackSlice) ReloadAll(ctx context.Context, exec boil.Context
 // NotificationPackExists checks if the NotificationPack row exists.
 func NotificationPackExists(ctx context.Context, exec boil.ContextExecutor, iD int) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `notification_packs` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `notification_pack` where `id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -939,7 +910,7 @@ func NotificationPackExists(ctx context.Context, exec boil.ContextExecutor, iD i
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "models: unable to check if notification_packs exists")
+		return false, errors.Wrap(err, "models: unable to check if notification_pack exists")
 	}
 
 	return exists, nil

@@ -1,6 +1,5 @@
 CREATE TABLE `notification_data` (
-  id INT NOT NULL UNIQUE AUTO_INCREMENT,
-  n_id INT NOT NULL,
+  id INT NOT NULL UNIQUE,
   nd_uuid INT NOT NULL,
   nd_title TEXT,
   nd_body TEXT,
@@ -16,5 +15,5 @@ CREATE TABLE `notification_data` (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`n_id`) REFERENCES `notification` (`id`)
+  FOREIGN KEY (`id`) REFERENCES `notification` (`id`)
 );

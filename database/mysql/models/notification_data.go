@@ -25,7 +25,6 @@ import (
 // NotificationDatum is an object representing the database table.
 type NotificationDatum struct {
 	ID         int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	NID        int         `boil:"n_id" json:"n_id" toml:"n_id" yaml:"n_id"`
 	NDUUID     int         `boil:"nd_uuid" json:"nd_uuid" toml:"nd_uuid" yaml:"nd_uuid"`
 	NDTitle    null.String `boil:"nd_title" json:"nd_title,omitempty" toml:"nd_title" yaml:"nd_title,omitempty"`
 	NDBody     null.String `boil:"nd_body" json:"nd_body,omitempty" toml:"nd_body" yaml:"nd_body,omitempty"`
@@ -41,7 +40,6 @@ type NotificationDatum struct {
 
 var NotificationDatumColumns = struct {
 	ID         string
-	NID        string
 	NDUUID     string
 	NDTitle    string
 	NDBody     string
@@ -52,7 +50,6 @@ var NotificationDatumColumns = struct {
 	UpdatedAt  string
 }{
 	ID:         "id",
-	NID:        "n_id",
 	NDUUID:     "nd_uuid",
 	NDTitle:    "nd_title",
 	NDBody:     "nd_body",
@@ -65,7 +62,6 @@ var NotificationDatumColumns = struct {
 
 var NotificationDatumTableColumns = struct {
 	ID         string
-	NID        string
 	NDUUID     string
 	NDTitle    string
 	NDBody     string
@@ -76,7 +72,6 @@ var NotificationDatumTableColumns = struct {
 	UpdatedAt  string
 }{
 	ID:         "notification_data.id",
-	NID:        "notification_data.n_id",
 	NDUUID:     "notification_data.nd_uuid",
 	NDTitle:    "notification_data.nd_title",
 	NDBody:     "notification_data.nd_body",
@@ -115,7 +110,6 @@ func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereI
 
 var NotificationDatumWhere = struct {
 	ID         whereHelperint
-	NID        whereHelperint
 	NDUUID     whereHelperint
 	NDTitle    whereHelpernull_String
 	NDBody     whereHelpernull_String
@@ -126,7 +120,6 @@ var NotificationDatumWhere = struct {
 	UpdatedAt  whereHelpertime_Time
 }{
 	ID:         whereHelperint{field: "`notification_data`.`id`"},
-	NID:        whereHelperint{field: "`notification_data`.`n_id`"},
 	NDUUID:     whereHelperint{field: "`notification_data`.`nd_uuid`"},
 	NDTitle:    whereHelpernull_String{field: "`notification_data`.`nd_title`"},
 	NDBody:     whereHelpernull_String{field: "`notification_data`.`nd_body`"},
@@ -139,23 +132,23 @@ var NotificationDatumWhere = struct {
 
 // NotificationDatumRels is where relationship names are stored.
 var NotificationDatumRels = struct {
-	N                     string
+	IDNotification        string
+	IDNotificationPack    string
 	NDNotificationGifUrls string
 	NDNotificationImgUrls string
-	NDNotificationPacks   string
 }{
-	N:                     "N",
+	IDNotification:        "IDNotification",
+	IDNotificationPack:    "IDNotificationPack",
 	NDNotificationGifUrls: "NDNotificationGifUrls",
 	NDNotificationImgUrls: "NDNotificationImgUrls",
-	NDNotificationPacks:   "NDNotificationPacks",
 }
 
 // notificationDatumR is where relationships are stored.
 type notificationDatumR struct {
-	N                     *Notification           `boil:"N" json:"N" toml:"N" yaml:"N"`
+	IDNotification        *Notification           `boil:"IDNotification" json:"IDNotification" toml:"IDNotification" yaml:"IDNotification"`
+	IDNotificationPack    *NotificationPack       `boil:"IDNotificationPack" json:"IDNotificationPack" toml:"IDNotificationPack" yaml:"IDNotificationPack"`
 	NDNotificationGifUrls NotificationGifURLSlice `boil:"NDNotificationGifUrls" json:"NDNotificationGifUrls" toml:"NDNotificationGifUrls" yaml:"NDNotificationGifUrls"`
 	NDNotificationImgUrls NotificationImgURLSlice `boil:"NDNotificationImgUrls" json:"NDNotificationImgUrls" toml:"NDNotificationImgUrls" yaml:"NDNotificationImgUrls"`
-	NDNotificationPacks   NotificationPackSlice   `boil:"NDNotificationPacks" json:"NDNotificationPacks" toml:"NDNotificationPacks" yaml:"NDNotificationPacks"`
 }
 
 // NewStruct creates a new relationship struct
@@ -167,9 +160,9 @@ func (*notificationDatumR) NewStruct() *notificationDatumR {
 type notificationDatumL struct{}
 
 var (
-	notificationDatumAllColumns            = []string{"id", "n_id", "nd_uuid", "nd_title", "nd_body", "nd_source", "nd_category", "nd_navtype", "created_at", "updated_at"}
-	notificationDatumColumnsWithoutDefault = []string{"n_id", "nd_uuid", "nd_title", "nd_body", "nd_category", "nd_navtype"}
-	notificationDatumColumnsWithDefault    = []string{"id", "nd_source", "created_at", "updated_at"}
+	notificationDatumAllColumns            = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_source", "nd_category", "nd_navtype", "created_at", "updated_at"}
+	notificationDatumColumnsWithoutDefault = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_category", "nd_navtype"}
+	notificationDatumColumnsWithDefault    = []string{"nd_source", "created_at", "updated_at"}
 	notificationDatumPrimaryKeyColumns     = []string{"id"}
 	notificationDatumGeneratedColumns      = []string{}
 )
@@ -265,16 +258,30 @@ func (q notificationDatumQuery) Exists(ctx context.Context, exec boil.ContextExe
 	return count > 0, nil
 }
 
-// N pointed to by the foreign key.
-func (o *NotificationDatum) N(mods ...qm.QueryMod) notificationQuery {
+// IDNotification pointed to by the foreign key.
+func (o *NotificationDatum) IDNotification(mods ...qm.QueryMod) notificationQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("`id` = ?", o.NID),
+		qm.Where("`id` = ?", o.ID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
 	query := Notifications(queryMods...)
 	queries.SetFrom(query.Query, "`notification`")
+
+	return query
+}
+
+// IDNotificationPack pointed to by the foreign key.
+func (o *NotificationDatum) IDNotificationPack(mods ...qm.QueryMod) notificationPackQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := NotificationPacks(queryMods...)
+	queries.SetFrom(query.Query, "`notification_pack`")
 
 	return query
 }
@@ -321,30 +328,9 @@ func (o *NotificationDatum) NDNotificationImgUrls(mods ...qm.QueryMod) notificat
 	return query
 }
 
-// NDNotificationPacks retrieves all the notification_pack's NotificationPacks with an executor via nd_id column.
-func (o *NotificationDatum) NDNotificationPacks(mods ...qm.QueryMod) notificationPackQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`notification_packs`.`nd_id`=?", o.ID),
-	)
-
-	query := NotificationPacks(queryMods...)
-	queries.SetFrom(query.Query, "`notification_packs`")
-
-	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"`notification_packs`.*"})
-	}
-
-	return query
-}
-
-// LoadN allows an eager lookup of values, cached into the
+// LoadIDNotification allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (notificationDatumL) LoadN(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationDatum interface{}, mods queries.Applicator) error {
+func (notificationDatumL) LoadIDNotification(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationDatum interface{}, mods queries.Applicator) error {
 	var slice []*NotificationDatum
 	var object *NotificationDatum
 
@@ -359,7 +345,7 @@ func (notificationDatumL) LoadN(ctx context.Context, e boil.ContextExecutor, sin
 		if object.R == nil {
 			object.R = &notificationDatumR{}
 		}
-		args = append(args, object.NID)
+		args = append(args, object.ID)
 
 	} else {
 	Outer:
@@ -369,12 +355,12 @@ func (notificationDatumL) LoadN(ctx context.Context, e boil.ContextExecutor, sin
 			}
 
 			for _, a := range args {
-				if a == obj.NID {
+				if a == obj.ID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.NID)
+			args = append(args, obj.ID)
 
 		}
 	}
@@ -414,14 +400,99 @@ func (notificationDatumL) LoadN(ctx context.Context, e boil.ContextExecutor, sin
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.N = foreign
+		object.R.IDNotification = foreign
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.NID == foreign.ID {
-				local.R.N = foreign
+			if local.ID == foreign.ID {
+				local.R.IDNotification = foreign
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadIDNotificationPack allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (notificationDatumL) LoadIDNotificationPack(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationDatum interface{}, mods queries.Applicator) error {
+	var slice []*NotificationDatum
+	var object *NotificationDatum
+
+	if singular {
+		object = maybeNotificationDatum.(*NotificationDatum)
+	} else {
+		slice = *maybeNotificationDatum.(*[]*NotificationDatum)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &notificationDatumR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &notificationDatumR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`notification_pack`),
+		qm.WhereIn(`notification_pack.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load NotificationPack")
+	}
+
+	var resultSlice []*NotificationPack
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice NotificationPack")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for notification_pack")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for notification_pack")
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.IDNotificationPack = foreign
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.ID {
+				local.R.IDNotificationPack = foreign
 				break
 			}
 		}
@@ -592,91 +663,10 @@ func (notificationDatumL) LoadNDNotificationImgUrls(ctx context.Context, e boil.
 	return nil
 }
 
-// LoadNDNotificationPacks allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (notificationDatumL) LoadNDNotificationPacks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotificationDatum interface{}, mods queries.Applicator) error {
-	var slice []*NotificationDatum
-	var object *NotificationDatum
-
-	if singular {
-		object = maybeNotificationDatum.(*NotificationDatum)
-	} else {
-		slice = *maybeNotificationDatum.(*[]*NotificationDatum)
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &notificationDatumR{}
-		}
-		args = append(args, object.ID)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &notificationDatumR{}
-			}
-
-			for _, a := range args {
-				if a == obj.ID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.ID)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`notification_packs`),
-		qm.WhereIn(`notification_packs.nd_id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load notification_packs")
-	}
-
-	var resultSlice []*NotificationPack
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice notification_packs")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on notification_packs")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for notification_packs")
-	}
-
-	if singular {
-		object.R.NDNotificationPacks = resultSlice
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.NDID {
-				local.R.NDNotificationPacks = append(local.R.NDNotificationPacks, foreign)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetN of the notificationDatum to the related item.
-// Sets o.R.N to related.
-// Adds o to related.R.NNotificationData.
-func (o *NotificationDatum) SetN(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Notification) error {
+// SetIDNotification of the notificationDatum to the related item.
+// Sets o.R.IDNotification to related.
+// Adds o to related.R.IDNotificationDatum.
+func (o *NotificationDatum) SetIDNotification(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Notification) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -686,7 +676,7 @@ func (o *NotificationDatum) SetN(ctx context.Context, exec boil.ContextExecutor,
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE `notification_data` SET %s WHERE %s",
-		strmangle.SetParamNames("`", "`", 0, []string{"n_id"}),
+		strmangle.SetParamNames("`", "`", 0, []string{"id"}),
 		strmangle.WhereClause("`", "`", 0, notificationDatumPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -700,23 +690,74 @@ func (o *NotificationDatum) SetN(ctx context.Context, exec boil.ContextExecutor,
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.NID = related.ID
+	o.ID = related.ID
 	if o.R == nil {
 		o.R = &notificationDatumR{
-			N: related,
+			IDNotification: related,
 		}
 	} else {
-		o.R.N = related
+		o.R.IDNotification = related
 	}
 
 	if related.R == nil {
 		related.R = &notificationR{
-			NNotificationData: NotificationDatumSlice{o},
+			IDNotificationDatum: o,
 		}
 	} else {
-		related.R.NNotificationData = append(related.R.NNotificationData, o)
+		related.R.IDNotificationDatum = o
 	}
 
+	return nil
+}
+
+// SetIDNotificationPack of the notificationDatum to the related item.
+// Sets o.R.IDNotificationPack to related.
+// Adds o to related.R.IDNotificationDatum.
+func (o *NotificationDatum) SetIDNotificationPack(ctx context.Context, exec boil.ContextExecutor, insert bool, related *NotificationPack) error {
+	var err error
+
+	if insert {
+		related.ID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE `notification_pack` SET %s WHERE %s",
+			strmangle.SetParamNames("`", "`", 0, []string{"id"}),
+			strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.ID = o.ID
+
+	}
+
+	if o.R == nil {
+		o.R = &notificationDatumR{
+			IDNotificationPack: related,
+		}
+	} else {
+		o.R.IDNotificationPack = related
+	}
+
+	if related.R == nil {
+		related.R = &notificationPackR{
+			IDNotificationDatum: o,
+		}
+	} else {
+		related.R.IDNotificationDatum = o
+	}
 	return nil
 }
 
@@ -826,59 +867,6 @@ func (o *NotificationDatum) AddNDNotificationImgUrls(ctx context.Context, exec b
 	return nil
 }
 
-// AddNDNotificationPacks adds the given related objects to the existing relationships
-// of the notification_datum, optionally inserting them as new records.
-// Appends related to o.R.NDNotificationPacks.
-// Sets related.R.ND appropriately.
-func (o *NotificationDatum) AddNDNotificationPacks(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NotificationPack) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.NDID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `notification_packs` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"nd_id"}),
-				strmangle.WhereClause("`", "`", 0, notificationPackPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.NDID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &notificationDatumR{
-			NDNotificationPacks: related,
-		}
-	} else {
-		o.R.NDNotificationPacks = append(o.R.NDNotificationPacks, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &notificationPackR{
-				ND: o,
-			}
-		} else {
-			rel.R.ND = o
-		}
-	}
-	return nil
-}
-
 // NotificationData retrieves all the records using an executor.
 func NotificationData(mods ...qm.QueryMod) notificationDatumQuery {
 	mods = append(mods, qm.From("`notification_data`"))
@@ -976,26 +964,15 @@ func (o *NotificationDatum) Insert(ctx context.Context, exec boil.ContextExecuto
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	result, err := exec.ExecContext(ctx, cache.query, vals...)
+	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
 		return errors.Wrap(err, "models: unable to insert into notification_data")
 	}
 
-	var lastID int64
 	var identifierCols []interface{}
 
 	if len(cache.retMapping) == 0 {
-		goto CacheNoHooks
-	}
-
-	lastID, err = result.LastInsertId()
-	if err != nil {
-		return ErrSyncFail
-	}
-
-	o.ID = int(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == notificationDatumMapping["id"] {
 		goto CacheNoHooks
 	}
 
@@ -1257,27 +1234,16 @@ func (o *NotificationDatum) Upsert(ctx context.Context, exec boil.ContextExecuto
 		fmt.Fprintln(writer, cache.query)
 		fmt.Fprintln(writer, vals)
 	}
-	result, err := exec.ExecContext(ctx, cache.query, vals...)
+	_, err = exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
 		return errors.Wrap(err, "models: unable to upsert for notification_data")
 	}
 
-	var lastID int64
 	var uniqueMap []uint64
 	var nzUniqueCols []interface{}
 
 	if len(cache.retMapping) == 0 {
-		goto CacheNoHooks
-	}
-
-	lastID, err = result.LastInsertId()
-	if err != nil {
-		return ErrSyncFail
-	}
-
-	o.ID = int(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == notificationDatumMapping["id"] {
 		goto CacheNoHooks
 	}
 
