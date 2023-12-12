@@ -12,8 +12,8 @@ import (
 func NModelToNotification(nModel *models.Notification) types.Notification {
 	return types.Notification{
 		ID:          nModel.ID,
-		Title:       "Lorem Ipsum",
-		Body:        "Lorem Ipsum",
+		Title:       nModel.R.IDNotificationDatum.NDTitle.String,
+		Body:        nModel.R.IDNotificationDatum.NDBody.String,
 		Action:      nModel.NAction,
 		Timezone:    nModel.NTimezone,
 		ScheduledOn: nModel.NTimestamp,

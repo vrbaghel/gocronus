@@ -31,7 +31,7 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 		return
 	}
 
-	qMods := []qm.QueryMod{qm.Limit(types.NOTIFICATIONS_PER_REQ)}
+	qMods := []qm.QueryMod{qm.Load(models.NotificationRels.IDNotificationDatum), qm.Limit(types.NOTIFICATIONS_PER_REQ)}
 
 	// find count of total pages
 	totalNotifications, err := h.store.NotificationStore.Count(txCtx, tx, qMods...)
