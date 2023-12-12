@@ -53,7 +53,7 @@ func NModelToNotificationReq(nModel *models.Notification, isIos bool) types.Requ
 			Source:      nModel.R.IDNotificationDatum.NDSource,
 			Category:    types.NDCATEGORY_TO_CATEGORY_MAP[nModel.R.IDNotificationDatum.NDCategory],
 			NavType:     types.NDNAVTYPE_TO_NAVTYPE_MAP[nModel.R.IDNotificationDatum.NDNavtype],
-			ImgUrls:     strings.Join(NDImgUrlsToUrls(&nModel.R.IDNotificationDatum.R.NDNotificationImgUrls)[:], ","),
+			ImageUrls:   strings.Join(NDImgUrlsToUrls(&nModel.R.IDNotificationDatum.R.NDNotificationImgUrls)[:], ","),
 			GifUrls:     strings.Join(NDGifUrlsToUrls(&nModel.R.IDNotificationDatum.R.NDNotificationGifUrls)[:], ","),
 			PackageId:   nModel.R.IDNotificationDatum.R.IDNotificationPack.NPID.String,
 			PackageName: nModel.R.IDNotificationDatum.R.IDNotificationPack.NPName.String,
@@ -66,7 +66,7 @@ func NModelToNotificationReq(nModel *models.Notification, isIos bool) types.Requ
 		reqPayload.Notification = types.RequestNotificationAdditionalPayload{
 			Title:       nModel.R.IDNotificationDatum.NDTitle.String,
 			Body:        nModel.R.IDNotificationDatum.NDBody.String,
-			ClickAction: types.NOTIFICATION_DEFAULT_ACTION,
+			ClickAction: nModel.R.IDNotificationDatum.NDClickAction.String,
 		}
 	}
 	return reqPayload

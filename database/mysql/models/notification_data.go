@@ -24,62 +24,67 @@ import (
 
 // NotificationDatum is an object representing the database table.
 type NotificationDatum struct {
-	ID         int         `boil:"id" json:"id" toml:"id" yaml:"id"`
-	NDUUID     int         `boil:"nd_uuid" json:"nd_uuid" toml:"nd_uuid" yaml:"nd_uuid"`
-	NDTitle    null.String `boil:"nd_title" json:"nd_title,omitempty" toml:"nd_title" yaml:"nd_title,omitempty"`
-	NDBody     null.String `boil:"nd_body" json:"nd_body,omitempty" toml:"nd_body" yaml:"nd_body,omitempty"`
-	NDSource   int         `boil:"nd_source" json:"nd_source" toml:"nd_source" yaml:"nd_source"`
-	NDCategory string      `boil:"nd_category" json:"nd_category" toml:"nd_category" yaml:"nd_category"`
-	NDNavtype  string      `boil:"nd_navtype" json:"nd_navtype" toml:"nd_navtype" yaml:"nd_navtype"`
-	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt  time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID            int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	NDUUID        int         `boil:"nd_uuid" json:"nd_uuid" toml:"nd_uuid" yaml:"nd_uuid"`
+	NDTitle       null.String `boil:"nd_title" json:"nd_title,omitempty" toml:"nd_title" yaml:"nd_title,omitempty"`
+	NDBody        null.String `boil:"nd_body" json:"nd_body,omitempty" toml:"nd_body" yaml:"nd_body,omitempty"`
+	NDSource      int         `boil:"nd_source" json:"nd_source" toml:"nd_source" yaml:"nd_source"`
+	NDCategory    string      `boil:"nd_category" json:"nd_category" toml:"nd_category" yaml:"nd_category"`
+	NDNavtype     string      `boil:"nd_navtype" json:"nd_navtype" toml:"nd_navtype" yaml:"nd_navtype"`
+	NDClickAction null.String `boil:"nd_click_action" json:"nd_click_action,omitempty" toml:"nd_click_action" yaml:"nd_click_action,omitempty"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *notificationDatumR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L notificationDatumL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var NotificationDatumColumns = struct {
-	ID         string
-	NDUUID     string
-	NDTitle    string
-	NDBody     string
-	NDSource   string
-	NDCategory string
-	NDNavtype  string
-	CreatedAt  string
-	UpdatedAt  string
+	ID            string
+	NDUUID        string
+	NDTitle       string
+	NDBody        string
+	NDSource      string
+	NDCategory    string
+	NDNavtype     string
+	NDClickAction string
+	CreatedAt     string
+	UpdatedAt     string
 }{
-	ID:         "id",
-	NDUUID:     "nd_uuid",
-	NDTitle:    "nd_title",
-	NDBody:     "nd_body",
-	NDSource:   "nd_source",
-	NDCategory: "nd_category",
-	NDNavtype:  "nd_navtype",
-	CreatedAt:  "created_at",
-	UpdatedAt:  "updated_at",
+	ID:            "id",
+	NDUUID:        "nd_uuid",
+	NDTitle:       "nd_title",
+	NDBody:        "nd_body",
+	NDSource:      "nd_source",
+	NDCategory:    "nd_category",
+	NDNavtype:     "nd_navtype",
+	NDClickAction: "nd_click_action",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
 }
 
 var NotificationDatumTableColumns = struct {
-	ID         string
-	NDUUID     string
-	NDTitle    string
-	NDBody     string
-	NDSource   string
-	NDCategory string
-	NDNavtype  string
-	CreatedAt  string
-	UpdatedAt  string
+	ID            string
+	NDUUID        string
+	NDTitle       string
+	NDBody        string
+	NDSource      string
+	NDCategory    string
+	NDNavtype     string
+	NDClickAction string
+	CreatedAt     string
+	UpdatedAt     string
 }{
-	ID:         "notification_data.id",
-	NDUUID:     "notification_data.nd_uuid",
-	NDTitle:    "notification_data.nd_title",
-	NDBody:     "notification_data.nd_body",
-	NDSource:   "notification_data.nd_source",
-	NDCategory: "notification_data.nd_category",
-	NDNavtype:  "notification_data.nd_navtype",
-	CreatedAt:  "notification_data.created_at",
-	UpdatedAt:  "notification_data.updated_at",
+	ID:            "notification_data.id",
+	NDUUID:        "notification_data.nd_uuid",
+	NDTitle:       "notification_data.nd_title",
+	NDBody:        "notification_data.nd_body",
+	NDSource:      "notification_data.nd_source",
+	NDCategory:    "notification_data.nd_category",
+	NDNavtype:     "notification_data.nd_navtype",
+	NDClickAction: "notification_data.nd_click_action",
+	CreatedAt:     "notification_data.created_at",
+	UpdatedAt:     "notification_data.updated_at",
 }
 
 // Generated where
@@ -109,25 +114,27 @@ func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereI
 func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var NotificationDatumWhere = struct {
-	ID         whereHelperint
-	NDUUID     whereHelperint
-	NDTitle    whereHelpernull_String
-	NDBody     whereHelpernull_String
-	NDSource   whereHelperint
-	NDCategory whereHelperstring
-	NDNavtype  whereHelperstring
-	CreatedAt  whereHelpertime_Time
-	UpdatedAt  whereHelpertime_Time
+	ID            whereHelperint
+	NDUUID        whereHelperint
+	NDTitle       whereHelpernull_String
+	NDBody        whereHelpernull_String
+	NDSource      whereHelperint
+	NDCategory    whereHelperstring
+	NDNavtype     whereHelperstring
+	NDClickAction whereHelpernull_String
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
 }{
-	ID:         whereHelperint{field: "`notification_data`.`id`"},
-	NDUUID:     whereHelperint{field: "`notification_data`.`nd_uuid`"},
-	NDTitle:    whereHelpernull_String{field: "`notification_data`.`nd_title`"},
-	NDBody:     whereHelpernull_String{field: "`notification_data`.`nd_body`"},
-	NDSource:   whereHelperint{field: "`notification_data`.`nd_source`"},
-	NDCategory: whereHelperstring{field: "`notification_data`.`nd_category`"},
-	NDNavtype:  whereHelperstring{field: "`notification_data`.`nd_navtype`"},
-	CreatedAt:  whereHelpertime_Time{field: "`notification_data`.`created_at`"},
-	UpdatedAt:  whereHelpertime_Time{field: "`notification_data`.`updated_at`"},
+	ID:            whereHelperint{field: "`notification_data`.`id`"},
+	NDUUID:        whereHelperint{field: "`notification_data`.`nd_uuid`"},
+	NDTitle:       whereHelpernull_String{field: "`notification_data`.`nd_title`"},
+	NDBody:        whereHelpernull_String{field: "`notification_data`.`nd_body`"},
+	NDSource:      whereHelperint{field: "`notification_data`.`nd_source`"},
+	NDCategory:    whereHelperstring{field: "`notification_data`.`nd_category`"},
+	NDNavtype:     whereHelperstring{field: "`notification_data`.`nd_navtype`"},
+	NDClickAction: whereHelpernull_String{field: "`notification_data`.`nd_click_action`"},
+	CreatedAt:     whereHelpertime_Time{field: "`notification_data`.`created_at`"},
+	UpdatedAt:     whereHelpertime_Time{field: "`notification_data`.`updated_at`"},
 }
 
 // NotificationDatumRels is where relationship names are stored.
@@ -160,8 +167,8 @@ func (*notificationDatumR) NewStruct() *notificationDatumR {
 type notificationDatumL struct{}
 
 var (
-	notificationDatumAllColumns            = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_source", "nd_category", "nd_navtype", "created_at", "updated_at"}
-	notificationDatumColumnsWithoutDefault = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_category", "nd_navtype"}
+	notificationDatumAllColumns            = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_source", "nd_category", "nd_navtype", "nd_click_action", "created_at", "updated_at"}
+	notificationDatumColumnsWithoutDefault = []string{"id", "nd_uuid", "nd_title", "nd_body", "nd_category", "nd_navtype", "nd_click_action"}
 	notificationDatumColumnsWithDefault    = []string{"nd_source", "created_at", "updated_at"}
 	notificationDatumPrimaryKeyColumns     = []string{"id"}
 	notificationDatumGeneratedColumns      = []string{}

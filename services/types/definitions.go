@@ -27,6 +27,7 @@ type SendNotificationRequestPayload struct {
 	Timezone     string                                    `json:"timezone,omitempty"`
 	ScheduledFor string                                    `json:"scheduled_for,omitempty"`
 	Device       string                                    `json:"device" binding:"required"`
+	ClickAction  string                                    `json:"click_action,omitempty"`
 	Category     *SendNotificationRequestCategoryPayload   `json:"category" binding:"required"`
 	Navigation   *SendNotificationRequestNavigationPayload `json:"navigation" binding:"required"`
 }
@@ -87,7 +88,7 @@ type RequestNotificationDataPayload struct {
 	Source      int    `json:"source"`
 	Category    int    `json:"category,omitempty"`
 	NavType     int    `json:"navType,omitempty"`
-	ImgUrls     string `json:"imgUrls,omitempty"`
+	ImageUrls   string `json:"imgUrls,omitempty"`
 	GifUrls     string `json:"gifUrls,omitempty"`
 	PackageId   string `json:"packageid,omitempty"`
 	PackageName string `json:"packageName,omitempty"`

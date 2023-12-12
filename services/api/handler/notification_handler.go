@@ -147,7 +147,8 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 
 	if notification.ID > 0 && (reqPayload.Category != nil || reqPayload.Navigation != nil) {
 		nData := models.NotificationDatum{
-			NDSource: 0,
+			NDSource:      0,
+			NDClickAction: null.StringFrom(reqPayload.ClickAction),
 		}
 		nUuid, err := strconv.Atoi(fmt.Sprintf("%d%d%d%d", notification.ID, notification.ID+1, notification.ID+2, notification.ID+3))
 		if err != nil {
@@ -241,6 +242,7 @@ func (h *Handler) RequestNotification(notification *models.Notification, isIos b
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: Unable to marshall json for notification request %s", err.Error())
 	}
+	h.logger.Info(fmt.Sprintf("NotificationHandler : RequestNotification :: Req payload %+v", string(reqPayload)))
 	req, err := http.NewRequest(http.MethodPost, h.config.Notification.BaseURL, bytes.NewBuffer(reqPayload))
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: http post request failed for notification request %s", err.Error())

@@ -12,6 +12,7 @@ CREATE TABLE `notification_data` (
     'profile',
     'pack_detail'
   ) NOT NULL,
+  nd_click_action TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
