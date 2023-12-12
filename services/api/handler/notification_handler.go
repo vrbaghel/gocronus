@@ -223,7 +223,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 	}
 
 	if sendNotificationNow {
-		h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: Scheduled for now? %t%d", sendNotificationNow, notification.ID))
+		// h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: Scheduled for now? %t%d", sendNotificationNow, notification.ID))
 		if err := h.RequestNotification(&notification, isIos); err != nil {
 			h.logger.Error(err.Error())
 			h.InternalServerError(gCtx)
@@ -242,7 +242,7 @@ func (h *Handler) RequestNotification(notification *models.Notification, isIos b
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: Unable to marshall json for notification request %s", err.Error())
 	}
-	h.logger.Info(fmt.Sprintf("NotificationHandler : RequestNotification :: Req payload %+v", string(reqPayload)))
+	// h.logger.Info(fmt.Sprintf("NotificationHandler : RequestNotification :: Req payload %+v", string(reqPayload)))
 	req, err := http.NewRequest(http.MethodPost, h.config.Notification.BaseURL, bytes.NewBuffer(reqPayload))
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: http post request failed for notification request %s", err.Error())

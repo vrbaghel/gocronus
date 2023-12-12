@@ -88,7 +88,7 @@ type RequestNotificationDataPayload struct {
 	Source      int    `json:"source"`
 	Category    int    `json:"category,omitempty"`
 	NavType     int    `json:"navType,omitempty"`
-	ImageUrls   string `json:"imgUrls,omitempty"`
+	ImageUrls   string `json:"imageUrls,omitempty"`
 	GifUrls     string `json:"gifUrls,omitempty"`
 	PackageId   string `json:"packageid,omitempty"`
 	PackageName string `json:"packageName,omitempty"`
