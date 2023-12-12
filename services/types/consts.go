@@ -1,0 +1,20 @@
+package types
+
+const NOTIFICATION_TIMESTAMP_FORMAT = "2006-01-02 15:04:05"
+
+var NDCATEGORY_TO_CATEGORY_MAP map[string]int = map[string]int{
+	CATEGORY_TEXT:            0,
+	CATEGORY_CAROUSEL:        1,
+	CATEGORY_THUMBNAIL_IMAGE: 2,
+	CATEGORY_GIF:             3,
+}
+
+var NDNAVTYPE_TO_NAVTYPE_MAP map[string]int = map[string]int{
+	NAVTYPE_AITOOL:      0,
+	NAVTYPE_AIFILTER:    1,
+	NAVTYPE_AIPHOTO:     2,
+	NAVTYPE_PROFILE:     3,
+	NAVTYPE_PACK_DETAIL: 4,
+}
+
+const NOTIFICATION_DEFAULT_ACTION = "ViewImageAction"
