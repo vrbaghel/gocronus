@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -29,6 +30,7 @@ type Notification struct {
 	NTimestamp time.Time `boil:"n_timestamp" json:"n_timestamp" toml:"n_timestamp" yaml:"n_timestamp"`
 	NDevice    string    `boil:"n_device" json:"n_device" toml:"n_device" yaml:"n_device"`
 	NStatus    string    `boil:"n_status" json:"n_status" toml:"n_status" yaml:"n_status"`
+	CronJobID  null.Int  `boil:"cron_job_id" json:"cron_job_id,omitempty" toml:"cron_job_id" yaml:"cron_job_id,omitempty"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt  time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
@@ -43,6 +45,7 @@ var NotificationColumns = struct {
 	NTimestamp string
 	NDevice    string
 	NStatus    string
+	CronJobID  string
 	CreatedAt  string
 	UpdatedAt  string
 }{
@@ -52,6 +55,7 @@ var NotificationColumns = struct {
 	NTimestamp: "n_timestamp",
 	NDevice:    "n_device",
 	NStatus:    "n_status",
+	CronJobID:  "cron_job_id",
 	CreatedAt:  "created_at",
 	UpdatedAt:  "updated_at",
 }
@@ -63,6 +67,7 @@ var NotificationTableColumns = struct {
 	NTimestamp string
 	NDevice    string
 	NStatus    string
+	CronJobID  string
 	CreatedAt  string
 	UpdatedAt  string
 }{
@@ -72,6 +77,7 @@ var NotificationTableColumns = struct {
 	NTimestamp: "notification.n_timestamp",
 	NDevice:    "notification.n_device",
 	NStatus:    "notification.n_status",
+	CronJobID:  "notification.cron_job_id",
 	CreatedAt:  "notification.created_at",
 	UpdatedAt:  "notification.updated_at",
 }
@@ -145,6 +151,30 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var NotificationWhere = struct {
 	ID         whereHelperint
 	NAction    whereHelperstring
@@ -152,6 +182,7 @@ var NotificationWhere = struct {
 	NTimestamp whereHelpertime_Time
 	NDevice    whereHelperstring
 	NStatus    whereHelperstring
+	CronJobID  whereHelpernull_Int
 	CreatedAt  whereHelpertime_Time
 	UpdatedAt  whereHelpertime_Time
 }{
@@ -161,6 +192,7 @@ var NotificationWhere = struct {
 	NTimestamp: whereHelpertime_Time{field: "`notification`.`n_timestamp`"},
 	NDevice:    whereHelperstring{field: "`notification`.`n_device`"},
 	NStatus:    whereHelperstring{field: "`notification`.`n_status`"},
+	CronJobID:  whereHelpernull_Int{field: "`notification`.`cron_job_id`"},
 	CreatedAt:  whereHelpertime_Time{field: "`notification`.`created_at`"},
 	UpdatedAt:  whereHelpertime_Time{field: "`notification`.`updated_at`"},
 }
@@ -186,8 +218,8 @@ func (*notificationR) NewStruct() *notificationR {
 type notificationL struct{}
 
 var (
-	notificationAllColumns            = []string{"id", "n_action", "n_timezone", "n_timestamp", "n_device", "n_status", "created_at", "updated_at"}
-	notificationColumnsWithoutDefault = []string{"n_action", "n_timezone", "n_timestamp", "n_device", "n_status"}
+	notificationAllColumns            = []string{"id", "n_action", "n_timezone", "n_timestamp", "n_device", "n_status", "cron_job_id", "created_at", "updated_at"}
+	notificationColumnsWithoutDefault = []string{"n_action", "n_timezone", "n_timestamp", "n_device", "n_status", "cron_job_id"}
 	notificationColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	notificationPrimaryKeyColumns     = []string{"id"}
 	notificationGeneratedColumns      = []string{}
