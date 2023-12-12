@@ -15,4 +15,5 @@ type ENV struct {
 	REFRESH_TOKEN_EXPIRATION        int
 	FCM_NOTIFICATION_URL            string
 	FCM_NOTIFICATION_ACTIONS        []string
+	FCM_NOTIFICATION_AUTH_KEY       string
 }

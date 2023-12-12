@@ -26,6 +26,7 @@ func readENV() (*ENV, error) {
 
 	fcmNotificationURL := os.Getenv("FCM_NOTIFICATION_URL")
 	fcmNotificationActions := strings.Split(os.Getenv("FCM_NOTIFICATION_ACTIONS"), ",")
+	fcmNotificationAuthKey := os.Getenv("FCM_NOTIFICATION_AUTH_KEY")
 
 	errSlice = append(errSlice, errServerLogLevel, errMySQLConnectionMaxOpen, errMySQLConnectionMaxIdle, errHttpServerPort, errServerTimeoutReadSeconds, errServerTimeoutWriteSeconds, errServerTimeoutShutdownSeconds, errAtExpiration, errRtExpiration)
 
@@ -48,5 +49,6 @@ func readENV() (*ENV, error) {
 		REFRESH_TOKEN_EXPIRATION:        rtExpiration,
 		FCM_NOTIFICATION_URL:            fcmNotificationURL,
 		FCM_NOTIFICATION_ACTIONS:        fcmNotificationActions,
+		FCM_NOTIFICATION_AUTH_KEY:       fcmNotificationAuthKey,
 	}, nil
 }
