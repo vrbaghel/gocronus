@@ -1,5 +1,5 @@
 # Stage 1
-FROM golang:1.17-alpine3.14 as builder
+FROM golang:1.21.5-alpine3.18 as builder
 
 # Add git
 RUN apk update && \
@@ -16,7 +16,7 @@ WORKDIR /ncronus/cmd
 RUN env GOOS=linux GOARCH=amd64 go build .
 
 # Stage 2
-FROM alpine:3.14
+FROM alpine:3.18
 
 RUN apk update && apk add ca-certificates
 RUN update-ca-certificates
