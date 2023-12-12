@@ -167,14 +167,14 @@ var NotificationWhere = struct {
 
 // NotificationRels is where relationship names are stored.
 var NotificationRels = struct {
-	NNotificationData string
+	IDNotificationDatum string
 }{
-	NNotificationData: "NNotificationData",
+	IDNotificationDatum: "IDNotificationDatum",
 }
 
 // notificationR is where relationships are stored.
 type notificationR struct {
-	NNotificationData NotificationDatumSlice `boil:"NNotificationData" json:"NNotificationData" toml:"NNotificationData" yaml:"NNotificationData"`
+	IDNotificationDatum *NotificationDatum `boil:"IDNotificationDatum" json:"IDNotificationDatum" toml:"IDNotificationDatum" yaml:"IDNotificationDatum"`
 }
 
 // NewStruct creates a new relationship struct
@@ -284,30 +284,23 @@ func (q notificationQuery) Exists(ctx context.Context, exec boil.ContextExecutor
 	return count > 0, nil
 }
 
-// NNotificationData retrieves all the notification_datum's NotificationData with an executor via n_id column.
-func (o *Notification) NNotificationData(mods ...qm.QueryMod) notificationDatumQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
+// IDNotificationDatum pointed to by the foreign key.
+func (o *Notification) IDNotificationDatum(mods ...qm.QueryMod) notificationDatumQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`id` = ?", o.ID),
 	}
 
-	queryMods = append(queryMods,
-		qm.Where("`notification_data`.`n_id`=?", o.ID),
-	)
+	queryMods = append(queryMods, mods...)
 
 	query := NotificationData(queryMods...)
 	queries.SetFrom(query.Query, "`notification_data`")
 
-	if len(queries.GetSelect(query.Query)) == 0 {
-		queries.SetSelect(query.Query, []string{"`notification_data`.*"})
-	}
-
 	return query
 }
 
-// LoadNNotificationData allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (notificationL) LoadNNotificationData(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotification interface{}, mods queries.Applicator) error {
+// LoadIDNotificationDatum allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (notificationL) LoadIDNotificationDatum(ctx context.Context, e boil.ContextExecutor, singular bool, maybeNotification interface{}, mods queries.Applicator) error {
 	var slice []*Notification
 	var object *Notification
 
@@ -346,7 +339,7 @@ func (notificationL) LoadNNotificationData(ctx context.Context, e boil.ContextEx
 
 	query := NewQuery(
 		qm.From(`notification_data`),
-		qm.WhereIn(`notification_data.n_id in ?`, args...),
+		qm.WhereIn(`notification_data.id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -354,30 +347,34 @@ func (notificationL) LoadNNotificationData(ctx context.Context, e boil.ContextEx
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load notification_data")
+		return errors.Wrap(err, "failed to eager load NotificationDatum")
 	}
 
 	var resultSlice []*NotificationDatum
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice notification_data")
+		return errors.Wrap(err, "failed to bind eager loaded slice NotificationDatum")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on notification_data")
+		return errors.Wrap(err, "failed to close results of eager load for notification_data")
 	}
 	if err = results.Err(); err != nil {
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for notification_data")
 	}
 
-	if singular {
-		object.R.NNotificationData = resultSlice
+	if len(resultSlice) == 0 {
 		return nil
 	}
 
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.NID {
-				local.R.NNotificationData = append(local.R.NNotificationData, foreign)
+	if singular {
+		foreign := resultSlice[0]
+		object.R.IDNotificationDatum = foreign
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.ID {
+				local.R.IDNotificationDatum = foreign
 				break
 			}
 		}
@@ -386,55 +383,53 @@ func (notificationL) LoadNNotificationData(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
-// AddNNotificationData adds the given related objects to the existing relationships
-// of the notification, optionally inserting them as new records.
-// Appends related to o.R.NNotificationData.
-// Sets related.R.N appropriately.
-func (o *Notification) AddNNotificationData(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NotificationDatum) error {
+// SetIDNotificationDatum of the notification to the related item.
+// Sets o.R.IDNotificationDatum to related.
+// Adds o to related.R.IDNotification.
+func (o *Notification) SetIDNotificationDatum(ctx context.Context, exec boil.ContextExecutor, insert bool, related *NotificationDatum) error {
 	var err error
-	for _, rel := range related {
-		if insert {
-			rel.NID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `notification_data` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"n_id"}),
-				strmangle.WhereClause("`", "`", 0, notificationDatumPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
 
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
+	if insert {
+		related.ID = o.ID
 
-			rel.NID = o.ID
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
 		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE `notification_data` SET %s WHERE %s",
+			strmangle.SetParamNames("`", "`", 0, []string{"id"}),
+			strmangle.WhereClause("`", "`", 0, notificationDatumPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.ID = o.ID
+
 	}
 
 	if o.R == nil {
 		o.R = &notificationR{
-			NNotificationData: related,
+			IDNotificationDatum: related,
 		}
 	} else {
-		o.R.NNotificationData = append(o.R.NNotificationData, related...)
+		o.R.IDNotificationDatum = related
 	}
 
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &notificationDatumR{
-				N: o,
-			}
-		} else {
-			rel.R.N = o
+	if related.R == nil {
+		related.R = &notificationDatumR{
+			IDNotification: o,
 		}
+	} else {
+		related.R.IDNotification = o
 	}
 	return nil
 }
