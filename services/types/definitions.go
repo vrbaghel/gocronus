@@ -1,20 +1,18 @@
 package types
 
-import "time"
-
 type NotificationActions struct {
 	Actions []string `json:"actions"`
 }
 
 type Notification struct {
-	ID          int       `json:"id" binding:"required"`
-	Title       string    `json:"title"`
-	Body        string    `json:"body"`
-	Action      string    `json:"action" binding:"required"`
-	Timezone    string    `json:"timezone"`
-	ScheduledOn time.Time `json:"scheduled_on"`
-	Device      string    `json:"device"`
-	Status      string    `json:"status" binding:"required"`
+	ID          int    `json:"id" binding:"required"`
+	Title       string `json:"title"`
+	Body        string `json:"body"`
+	Action      string `json:"action" binding:"required"`
+	Timezone    string `json:"timezone"`
+	ScheduledOn string `json:"scheduled_on"`
+	Device      string `json:"device"`
+	Status      string `json:"status" binding:"required"`
 }
 
 type GetNotificationsResponsePayload struct {
@@ -33,28 +31,28 @@ type SendNotificationRequestPayload struct {
 }
 
 type SendNotificationRequestCategoryPayload struct {
-	Type string                                     `json:"type" binding:"required"`
-	Data SendNotificationRequestCategoryDataPayload `json:"data" binding:"required"`
+	Type string                                      `json:"type" binding:"required"`
+	Data *SendNotificationRequestCategoryDataPayload `json:"data" binding:"required"`
 }
 
 type SendNotificationRequestNavigationPayload struct {
-	Type string                                `json:"type" binding:"required"`
-	Data SendNotificationRequestNavDataPayload `json:"data" binding:"required"`
+	Type string                                 `json:"type" binding:"required"`
+	Data *SendNotificationRequestNavDataPayload `json:"data" binding:"required"`
 }
 
 type SendNotificationRequestCategoryDataPayload struct {
-	Title     string   `json:"title"`
-	Body      string   `json:"body"`
-	ImageURLs []string `json:"img_urls"`
-	GifURLs   []string `json:"gif_urls"`
+	Title     string   `json:"title,omitempty"`
+	Body      string   `json:"body,omitempty"`
+	ImageURLs []string `json:"img_urls,omitempty"`
+	GifURLs   []string `json:"gif_urls,omitempty"`
 }
 
 type SendNotificationRequestNavDataPayload struct {
-	PackageID   string `json:"package_id"`
-	PackageName string `json:"package_name"`
-	OrderID     string `json:"order_id"`
-	FilterID    string `json:"filter_id"`
-	ToolID      string `json:"tool_id"`
+	PackageID   string `json:"package_id,omitempty"`
+	PackageName string `json:"package_name,omitempty"`
+	OrderID     string `json:"order_id,omitempty"`
+	FilterID    string `json:"filter_id,omitempty"`
+	ToolID      string `json:"tool_id,omitempty"`
 }
 
 type APIError struct {
@@ -86,8 +84,8 @@ type RequestNotificationDataPayload struct {
 	Title       string `json:"title,omitempty"`
 	Body        string `json:"body,omitempty"`
 	Source      int    `json:"source"`
-	Category    int    `json:"category,omitempty"`
-	NavType     int    `json:"navType,omitempty"`
+	Category    int    `json:"category"`
+	NavType     int    `json:"navType"`
 	ImageUrls   string `json:"imageUrls,omitempty"`
 	GifUrls     string `json:"gifUrls,omitempty"`
 	PackageId   string `json:"packageid,omitempty"`

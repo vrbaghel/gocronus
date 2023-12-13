@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,12 @@ type HandlerParams struct {
 	Config *HandlerConfig
 	MySql  *mysql.MySQL
 	Logger *zap.Logger
+	Cron   *CronConfig
+}
+
+type CronConfig struct {
+	CST *cron.Cron
+	IST *cron.Cron
 }
 
 type Handler struct {
@@ -38,6 +45,7 @@ type Handler struct {
 	mySql   *mysql.MySQL
 	store   *store.Store
 	logger  *zap.Logger
+	cron    *CronConfig
 }
 
 func NewHandler(handlerParams HandlerParams, store *store.Store) *Handler {
@@ -45,6 +53,7 @@ func NewHandler(handlerParams HandlerParams, store *store.Store) *Handler {
 		config:  handlerParams.Config,
 		mySql:   handlerParams.MySql,
 		logger:  handlerParams.Logger,
+		cron:    handlerParams.Cron,
 		context: map[string]string{},
 		store:   store,
 	}
