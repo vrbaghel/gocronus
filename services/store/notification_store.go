@@ -45,7 +45,7 @@ func (n *NotificationStore) QueryOne(ctx context.Context, exec boil.ContextExecu
 	return notification, nil
 }
 
-func (n *NotificationStore) QueryAll(ctx context.Context, exec boil.ContextExecutor, nID int, queryMods ...qm.QueryMod) (models.NotificationSlice, error) {
+func (n *NotificationStore) QueryAll(ctx context.Context, exec boil.ContextExecutor, queryMods ...qm.QueryMod) (models.NotificationSlice, error) {
 	notification, err := models.Notifications(queryMods...).All(ctx, exec)
 	if err != nil {
 		return nil, err
