@@ -145,7 +145,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		notification.NStatus = models.NotificationNStatusCompleted
 		notification.NTimestamp = time.Now().In(types.IST_TIMEZONE)
 		sendNotificationNow = true
-		h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: scheduledNow %+v", notification.NTimestamp))
+		// h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: scheduledNow %+v", notification.NTimestamp))
 	}
 
 	if err := h.store.NotificationStore.Insert(txCtx, tx, &notification); err != nil {
@@ -158,14 +158,8 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		nData := models.NotificationDatum{
 			NDSource:      0,
 			NDClickAction: null.StringFrom(reqPayload.ClickAction),
+			NDUUID:        notification.ID,
 		}
-		nUuid, err := strconv.Atoi(fmt.Sprintf("%d%d%d%d", notification.ID, notification.ID+1, notification.ID+2, notification.ID+3))
-		if err != nil {
-			h.logger.Error(fmt.Sprintf("NotificationHandler : SendNotification :: Failed to create UUID for notification data for request %s\t%s", gCtx.Request.URL.String(), err.Error()))
-			h.InternalServerError(gCtx)
-			return
-		}
-		nData.NDUUID = nUuid
 
 		if reqPayload.Category != nil {
 			nData.NDCategory = reqPayload.Category.Type
@@ -239,10 +233,82 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 			return
 		}
 	} else {
-		go h.ScheduleNotification(&notification, isISTZone)
+		go h.ScheduleNotification(&notification, isISTZone, notification.R.IDNotificationDatum.R.NDNotificationImgUrls, notification.R.IDNotificationDatum.R.NDNotificationGifUrls)
 	}
 
 	gCtx.Status(http.StatusOK)
+}
+
+func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZone bool, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
+	var nTimeStamp time.Time
+	var scheduler *cron.Cron
+	if isISTZone {
+		nTimeStamp = notification.NTimestamp.In(types.IST_TIMEZONE)
+		scheduler = h.cron.IST
+	} else {
+		nTimeStamp = notification.NTimestamp.In(types.CST_TIMEZONE)
+		scheduler = h.cron.CST
+	}
+	nID := notification.ID
+	day := nTimeStamp.Day()
+	month := nTimeStamp.Month()
+	hour := nTimeStamp.Hour()
+	minute := nTimeStamp.Minute()
+	// h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Scheduled for %d-%d %d:%d:%d", day, month, hour, minute, second))
+
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
+	cronExpression := fmt.Sprintf("%d %d %d %d *", minute, hour, day, month)
+	jobId, err := scheduler.AddFunc(cronExpression, func() {
+		h.ScheduleNotificationHandler(notification, imgUrls, gifUrls)
+	})
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to schedule notification for cron job scheduled at %s for notification %d\t%s", cronExpression, nID, err.Error()))
+	}
+
+	notification.CronJobID = null.IntFrom(int(jobId))
+	notification.NStatus = models.NotificationNStatusScheduled
+
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to update notification %d with cron job ID %d\t%s", nID, jobId, err.Error()))
+	}
+
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
+}
+
+func (h *Handler) ScheduleNotificationHandler(notification *models.Notification, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
+	nID := notification.ID
+	if err := h.RequestNotification(utils.NPartModelToNotificationReq(notification, notification.NDevice == models.NotificationNDeviceIos, imgUrls, gifUrls)); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to request scheduled notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
+		// remove cron jobs if failed
+		h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+		h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+		return
+	}
+	// remove cron jobs once completed
+	h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+	h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
+		return
+	}
+	notification.NStatus = models.NotificationNStatusCompleted
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to update notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
+	}
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
 }
 
 func (h *Handler) RequestNotification(nPayload types.RequestNotificationPayload) error {
@@ -270,75 +336,4 @@ func (h *Handler) RequestNotification(nPayload types.RequestNotificationPayload)
 	defer res.Body.Close()
 	client.CloseIdleConnections()
 	return nil
-}
-
-func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZone bool) {
-	nTimeStamp := notification.NTimestamp
-	nID := notification.ID
-	day := nTimeStamp.Day()
-	month := nTimeStamp.Month()
-	hour := nTimeStamp.Hour()
-	minute := nTimeStamp.Minute()
-	// h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Scheduled for %d-%d %d:%d:%d", day, month, hour, minute, second))
-
-	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
-	defer cancel()
-	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
-	if err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
-	}
-
-	var scheduler *cron.Cron
-	if isISTZone {
-		scheduler = h.cron.IST
-	} else {
-		scheduler = h.cron.CST
-	}
-	cronExpression := fmt.Sprintf("%d %d %d %d *", minute, hour, day, month)
-	jobId, err := scheduler.AddFunc(cronExpression, func() {
-		h.ScheduleNotificationHandler(notification)
-	})
-	if err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to schedule notification for cron job scheduled at %s for notification %d\t%s", cronExpression, nID, err.Error()))
-	}
-
-	notification.CronJobID = null.IntFrom(int(jobId))
-	notification.NStatus = models.NotificationNStatusScheduled
-
-	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to update notification %d with cron job ID %d\t%s", nID, jobId, err.Error()))
-	}
-
-	if err := tx.Commit(); err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
-	}
-}
-
-func (h *Handler) ScheduleNotificationHandler(notification *models.Notification) {
-	nID := notification.ID
-	if err := h.RequestNotification(utils.NModelToNotificationReq(notification, notification.NDevice == models.NotificationNDeviceIos)); err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to request scheduled notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
-		// remove cron jobs if failed
-		h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
-		h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
-		return
-	}
-	// remove cron jobs once completed
-	h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
-	h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
-
-	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
-	defer cancel()
-	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
-	if err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
-		return
-	}
-	notification.NStatus = models.NotificationNStatusCompleted
-	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to update notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
-	}
-	if err := tx.Commit(); err != nil {
-		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
-	}
 }

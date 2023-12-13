@@ -49,6 +49,20 @@ func NotificationGifUrlsToNGUModel(gifUrls []string) models.NotificationGifURLSl
 }
 
 func NModelToNotificationReq(nModel *models.Notification, isIos bool) types.RequestNotificationPayload {
+	reqPayload := NotificationModelToNotificationPayload(nModel, isIos)
+	reqPayload.Data.ImageUrls = strings.Join(NDImgUrlsToUrls(nModel.R.IDNotificationDatum.R.NDNotificationImgUrls)[:], ",")
+	reqPayload.Data.GifUrls = strings.Join(NDGifUrlsToUrls(nModel.R.IDNotificationDatum.R.NDNotificationGifUrls)[:], ",")
+	return reqPayload
+}
+
+func NPartModelToNotificationReq(nModel *models.Notification, isIos bool, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) types.RequestNotificationPayload {
+	reqPayload := NotificationModelToNotificationPayload(nModel, isIos)
+	reqPayload.Data.ImageUrls = strings.Join(NDImgUrlsToUrls(imgUrls)[:], ",")
+	reqPayload.Data.GifUrls = strings.Join(NDGifUrlsToUrls(gifUrls)[:], ",")
+	return reqPayload
+}
+
+func NotificationModelToNotificationPayload(nModel *models.Notification, isIos bool) types.RequestNotificationPayload {
 	reqPayload := types.RequestNotificationPayload{
 		To:             fmt.Sprintf("/topics/%s", nModel.NAction),
 		MutableContent: true,
@@ -59,8 +73,6 @@ func NModelToNotificationReq(nModel *models.Notification, isIos bool) types.Requ
 			Source:      nModel.R.IDNotificationDatum.NDSource,
 			Category:    types.NDCATEGORY_TO_CATEGORY_MAP[nModel.R.IDNotificationDatum.NDCategory],
 			NavType:     types.NDNAVTYPE_TO_NAVTYPE_MAP[nModel.R.IDNotificationDatum.NDNavtype],
-			ImageUrls:   strings.Join(NDImgUrlsToUrls(nModel.R.IDNotificationDatum.R.NDNotificationImgUrls)[:], ","),
-			GifUrls:     strings.Join(NDGifUrlsToUrls(nModel.R.IDNotificationDatum.R.NDNotificationGifUrls)[:], ","),
 			PackageId:   nModel.R.IDNotificationDatum.R.IDNotificationPack.NPID.String,
 			PackageName: nModel.R.IDNotificationDatum.R.IDNotificationPack.NPName.String,
 			OrderId:     nModel.R.IDNotificationDatum.R.IDNotificationPack.NPOrderID.String,
