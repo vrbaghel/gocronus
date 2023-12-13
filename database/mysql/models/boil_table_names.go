@@ -9,12 +9,10 @@ var TableNames = struct {
 	NotificationGifUrls string
 	NotificationImgUrls string
 	NotificationPack    string
-	Users               string
 }{
 	Notification:        "notification",
 	NotificationData:    "notification_data",
 	NotificationGifUrls: "notification_gif_urls",
 	NotificationImgUrls: "notification_img_urls",
 	NotificationPack:    "notification_pack",
-	Users:               "users",
 }
