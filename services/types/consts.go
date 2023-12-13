@@ -24,3 +24,5 @@ var NDNAVTYPE_TO_NAVTYPE_MAP map[string]int = map[string]int{
 	models.NotificationDataNDNavtypeProfile:    3,
 	models.NotificationDataNDNavtypePackDetail: 4,
 }
+
+const NOTIFICATION_ID_PARAM = "notificationID"

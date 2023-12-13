@@ -23,5 +23,5 @@ func RegisterEndpoints(routineEngine *gin.Engine, handlerParams handler.HandlerP
 	// send notification
 	notification.POST("/send", handler.SendNotification)
 	// terminate notification
-	// notification.DELETE("/")
+	notification.DELETE("/:notificationID", handler.TerminateNotification)
 }

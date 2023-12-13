@@ -239,6 +239,58 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 	gCtx.Status(http.StatusOK)
 }
 
+func (h *Handler) TerminateNotification(gCtx *gin.Context) {
+	nID, err := strconv.ParseInt(gCtx.Param(types.NOTIFICATION_ID_PARAM), 10, 64)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Invalid notificationID format %s", err.Error()))
+		gCtx.JSON(http.StatusBadRequest, types.APIError{
+			Code:    http.StatusBadRequest,
+			Status:  http.StatusText(http.StatusBadRequest),
+			Message: "invalid id format",
+		})
+		return
+	}
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(gCtx, nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Unable to begin sql transaction for request URL %s\t%s", gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+
+	notification, err := h.store.NotificationStore.GetByID(txCtx, tx, int(nID))
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: notificationID does not exist %s", err.Error()))
+		gCtx.JSON(http.StatusNotFound, types.APIError{
+			Code:    http.StatusNotFound,
+			Status:  http.StatusText(http.StatusBadRequest),
+			Message: "notification ID not found",
+		})
+		return
+	}
+
+	nCronJobId := notification.CronJobID.Int
+	if nCronJobId > 0 && notification.NStatus == models.NotificationNStatusScheduled {
+		notification.NStatus = models.NotificationNStatusTerminated
+		notification.CronJobID = null.IntFrom(0)
+		h.cron.CST.Remove(cron.EntryID(nCronJobId))
+		h.cron.IST.Remove(cron.EntryID(nCronJobId))
+	}
+
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Failed to terminate notification %d for request %s\t%s", nID, gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Unable to commit SQL transaction for request %s\t%s", gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+}
+
 func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZone bool, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
 	var nTimeStamp time.Time
 	var scheduler *cron.Cron
