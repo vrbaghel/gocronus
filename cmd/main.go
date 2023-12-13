@@ -7,11 +7,10 @@ import (
 	"ncronus/pkg/env"
 	"ncronus/pkg/logger"
 	"ncronus/services/api/handler"
+	"ncronus/services/api/ncron"
 	"ncronus/services/api/server"
-	"ncronus/services/types"
 	"time"
 
-	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
 
@@ -64,23 +63,9 @@ func (p *Process) closeSQLConnection(client *mysql.MySQL) {
 	log.Println("closed sql connection")
 }
 
-func (p *Process) initCron() *handler.CronConfig {
-	return &handler.CronConfig{
-		CST: cron.New(cron.WithLocation(types.CST_TIMEZONE)),
-		IST: cron.New(cron.WithLocation(types.IST_TIMEZONE)),
-	}
-}
-
-func (p *Process) startCron(cronConfig *handler.CronConfig) {
-	cronConfig.CST.Start()
-	cronConfig.IST.Start()
-	log.Println("cron started")
-}
-
-func (p *Process) destroyCron(cronConfig *handler.CronConfig) {
-	cronConfig.CST.Stop()
-	cronConfig.IST.Stop()
-	log.Println("cron stopped")
+func (p *Process) initCron() *ncron.Cron {
+	cronInstance := ncron.NewCron()
+	return cronInstance
 }
 
 // // initialize http server
@@ -102,6 +87,7 @@ func main() {
 	handlerParams.Logger = process.initLogger()
 	// cron config
 	handlerParams.Cron = process.initCron()
+	startCron, stopCron := handlerParams.Cron.StartCron, handlerParams.Cron.StopCron
 	// service config
 	handlerParams.Config = &handler.HandlerConfig{
 		API: handler.APIConfig{
@@ -124,8 +110,8 @@ func main() {
 	startHTTPServer, stopHTTPServer := process.initHTTPServer(handlerParams)
 
 	defer process.closeSQLConnection(sqlClient)
-	defer process.destroyCron(handlerParams.Cron)
+	defer stopCron()
 	defer stopHTTPServer()
-	process.startCron(handlerParams.Cron)
+	startCron()
 	startHTTPServer()
 }

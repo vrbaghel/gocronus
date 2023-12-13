@@ -3,12 +3,12 @@ package handler
 import (
 	"ncronus/database/mysql"
 	"ncronus/pkg/auth"
+	"ncronus/services/api/ncron"
 	"ncronus/services/store"
 	"ncronus/services/types"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 )
 
@@ -31,12 +31,7 @@ type HandlerParams struct {
 	Config *HandlerConfig
 	MySql  *mysql.MySQL
 	Logger *zap.Logger
-	Cron   *CronConfig
-}
-
-type CronConfig struct {
-	CST *cron.Cron
-	IST *cron.Cron
+	Cron   *ncron.Cron
 }
 
 type Handler struct {
@@ -45,7 +40,7 @@ type Handler struct {
 	mySql   *mysql.MySQL
 	store   *store.Store
 	logger  *zap.Logger
-	cron    *CronConfig
+	cron    *ncron.Cron
 }
 
 func NewHandler(handlerParams HandlerParams, store *store.Store) *Handler {
