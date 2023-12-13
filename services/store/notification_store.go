@@ -29,6 +29,30 @@ func (n *NotificationStore) Count(ctx context.Context, exec boil.ContextExecutor
 	return count, nil
 }
 
+func (n *NotificationStore) GetByID(ctx context.Context, exec boil.ContextExecutor, nID int) (*models.Notification, error) {
+	notification, err := models.FindNotification(ctx, exec, nID)
+	if err != nil {
+		return nil, err
+	}
+	return notification, nil
+}
+
+func (n *NotificationStore) QueryOne(ctx context.Context, exec boil.ContextExecutor, nID int, queryMods ...qm.QueryMod) (*models.Notification, error) {
+	notification, err := models.Notifications(queryMods...).One(ctx, exec)
+	if err != nil {
+		return nil, err
+	}
+	return notification, nil
+}
+
+func (n *NotificationStore) QueryAll(ctx context.Context, exec boil.ContextExecutor, nID int, queryMods ...qm.QueryMod) (models.NotificationSlice, error) {
+	notification, err := models.Notifications(queryMods...).All(ctx, exec)
+	if err != nil {
+		return nil, err
+	}
+	return notification, nil
+}
+
 func (n *NotificationStore) GetAll(ctx context.Context, exec boil.ContextExecutor, queryMods ...qm.QueryMod) (models.NotificationSlice, error) {
 	notifications, err := models.Notifications(queryMods...).All(ctx, exec)
 	if err != nil {
