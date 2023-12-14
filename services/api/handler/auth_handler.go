@@ -46,7 +46,7 @@ func (h *Handler) ValidateToken(request *http.Request) (*auth.JWTMetadata, *auth
 			Message: "error invalid Authorization header",
 		}
 	}
-	meta, err := auth.ValidateToken(clientToken, false)
+	meta, err := auth.ValidateToken(clientToken, false, h.config.API.Token)
 	if err != nil {
 		return nil, &auth.AuthError{
 			Code:    err.Code,
