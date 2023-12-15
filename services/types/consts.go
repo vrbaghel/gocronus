@@ -26,3 +26,6 @@ var NDNAVTYPE_TO_NAVTYPE_MAP map[string]int = map[string]int{
 }
 
 const NOTIFICATION_ID_PARAM = "notificationID"
+const NOTIFICATION_ENV_QUERY = "env"
+const NOTIFICATION_PAGE_QUERY = "page"
+const NOTIFICATION_STATUS_QUERY = "status"

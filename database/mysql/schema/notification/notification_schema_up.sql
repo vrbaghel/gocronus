@@ -11,6 +11,7 @@ CREATE TABLE `notification` (
     'terminated'
   ) NOT NULL,
   cron_job_id INT,
+  is_dev TINYINT NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

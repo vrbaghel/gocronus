@@ -32,7 +32,33 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 		return
 	}
 
-	qMods := []qm.QueryMod{qm.Load(models.NotificationRels.IDNotificationDatum), qm.Limit(types.NOTIFICATIONS_PER_REQ)}
+	qMods := []qm.QueryMod{qm.Load(models.NotificationRels.IDNotificationDatum)}
+
+	// check if env query is available
+	envParam := gCtx.DefaultQuery(types.NOTIFICATION_ENV_QUERY, "-1")
+	env, err := strconv.Atoi(envParam)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Query param parsing failed for env value %s\t%s", envParam, err.Error()))
+	}
+	if env == types.NOTIFICATION_ENV_DEV {
+		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_DEV))
+	} else if env == types.NOTIFICATION_ENV_PROD {
+		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_PROD))
+	} else {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Invalid value for for env query param %s", envParam))
+	}
+
+	// check if status query is available
+	statusParam := gCtx.Query(types.NOTIFICATION_STATUS_QUERY)
+	if statusParam != "" {
+		switch statusParam {
+		case models.NotificationNStatusCompleted, models.NotificationNStatusRunning, models.NotificationNStatusScheduled, models.NotificationNStatusTerminated:
+			qMods = append(qMods, qm.And("n_status = ?", statusParam))
+		default:
+			h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Invalid value for for status query param %s", statusParam))
+		}
+	}
+	qMods = append(qMods, qm.Limit(types.NOTIFICATIONS_PER_REQ))
 
 	// find count of total pages
 	totalNotifications, err := h.store.NotificationStore.Count(txCtx, tx, qMods...)
@@ -46,8 +72,8 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 		totalPages = 1
 	}
 
-	// do pagination if page param exists
-	pageParam := gCtx.DefaultQuery("page", "1")
+	// do pagination if page query exists
+	pageParam := gCtx.DefaultQuery(types.NOTIFICATION_PAGE_QUERY, "1")
 	page, err := strconv.Atoi(pageParam)
 	if err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Query param parsing failed for page value %s\t%s", pageParam, err.Error()))
