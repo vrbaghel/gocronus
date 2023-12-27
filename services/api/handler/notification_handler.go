@@ -40,9 +40,9 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 	if err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Query param parsing failed for env value %s\t%s", envParam, err.Error()))
 	}
-	if env == types.NOTIFICATION_ENV_DEV {
+	if int8(env) == types.NOTIFICATION_ENV_DEV {
 		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_DEV))
-	} else if env == types.NOTIFICATION_ENV_PROD {
+	} else if int8(env) == types.NOTIFICATION_ENV_PROD {
 		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_PROD))
 	} else {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Invalid value for for env query param %s", envParam))
@@ -140,7 +140,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		NAction: reqPayload.Action,
 		NDevice: reqPayload.Device,
 	}
-	if reqPayload.IsProd {
+	if reqPayload.Env == 0 {
 		notification.IsDev = types.NOTIFICATION_ENV_PROD
 	} else {
 		notification.IsDev = types.NOTIFICATION_ENV_DEV
