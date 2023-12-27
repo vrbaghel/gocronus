@@ -140,6 +140,11 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		NAction: reqPayload.Action,
 		NDevice: reqPayload.Device,
 	}
+	if reqPayload.IsProd {
+		notification.IsDev = types.NOTIFICATION_ENV_PROD
+	} else {
+		notification.IsDev = types.NOTIFICATION_ENV_DEV
+	}
 	if reqPayload.Timezone != "" {
 		notification.NTimezone = reqPayload.Timezone
 	} else {

@@ -26,6 +26,7 @@ type SendNotificationRequestPayload struct {
 	ScheduledFor string                                    `json:"scheduled_for,omitempty"`
 	Device       string                                    `json:"device" binding:"required"`
 	ClickAction  string                                    `json:"click_action,omitempty"`
+	IsProd       bool                                      `json:"is_prod"`
 	Category     *SendNotificationRequestCategoryPayload   `json:"category" binding:"required"`
 	Navigation   *SendNotificationRequestNavigationPayload `json:"navigation" binding:"required"`
 }
