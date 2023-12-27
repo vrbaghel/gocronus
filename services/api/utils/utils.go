@@ -66,7 +66,7 @@ func NotificationModelToNotificationPayload(nModel *models.Notification, isIos b
 	reqPayload := types.RequestNotificationPayload{
 		To:             fmt.Sprintf("/topics/%s", nModel.NAction),
 		MutableContent: true,
-		Data: types.RequestNotificationDataPayload{
+		Data: &types.RequestNotificationDataPayload{
 			Id:          nModel.R.IDNotificationDatum.NDUUID,
 			Title:       nModel.R.IDNotificationDatum.NDTitle.String,
 			Body:        nModel.R.IDNotificationDatum.NDBody.String,
@@ -81,7 +81,7 @@ func NotificationModelToNotificationPayload(nModel *models.Notification, isIos b
 		},
 	}
 	if isIos {
-		reqPayload.Notification = types.RequestNotificationAdditionalPayload{
+		reqPayload.Notification = &types.RequestNotificationAdditionalPayload{
 			Title:       nModel.R.IDNotificationDatum.NDTitle.String,
 			Body:        nModel.R.IDNotificationDatum.NDBody.String,
 			ClickAction: nModel.R.IDNotificationDatum.NDClickAction.String,

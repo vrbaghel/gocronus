@@ -67,10 +67,10 @@ type PaginationData struct {
 }
 
 type RequestNotificationPayload struct {
-	To             string                               `json:"to" binding:"required"`
-	MutableContent bool                                 `json:"mutable_content"`
-	Notification   RequestNotificationAdditionalPayload `json:"notification,omitempty"`
-	Data           RequestNotificationDataPayload       `json:"data" binding:"required"`
+	To             string                                `json:"to" binding:"required"`
+	MutableContent bool                                  `json:"mutable_content"`
+	Notification   *RequestNotificationAdditionalPayload `json:"notification,omitempty"`
+	Data           *RequestNotificationDataPayload       `json:"data" binding:"required"`
 }
 
 type RequestNotificationAdditionalPayload struct {
