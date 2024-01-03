@@ -305,8 +305,11 @@ func (h *Handler) TerminateNotification(gCtx *gin.Context) {
 	if nCronJobId > 0 && notification.NStatus == models.NotificationNStatusScheduled {
 		notification.NStatus = models.NotificationNStatusTerminated
 		notification.CronJobID = null.IntFrom(0)
-		h.cron.CST.Remove(cron.EntryID(nCronJobId))
-		h.cron.IST.Remove(cron.EntryID(nCronJobId))
+		if notification.NTimezone == models.NotificationNTimezoneIST {
+			h.cron.IST.Remove(cron.EntryID(nCronJobId))
+		} else {
+			h.cron.CST.Remove(cron.EntryID(nCronJobId))
+		}
 	}
 
 	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
@@ -337,7 +340,7 @@ func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZ
 	month := nTimeStamp.Month()
 	hour := nTimeStamp.Hour()
 	minute := nTimeStamp.Minute()
-	// h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Scheduled for %d-%d %d:%d:%d", day, month, hour, minute, second))
+	h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Notification with ID %d scheduled for %s || %s", nID, nTimeStamp.String(), nTimeStamp.UTC().String()))
 
 	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
 	defer cancel()
@@ -347,6 +350,7 @@ func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZ
 	}
 	cronExpression := fmt.Sprintf("%d %d %d %d *", minute, hour, day, month)
 	jobId, err := scheduler.AddFunc(cronExpression, func() {
+		h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Notification with ID %d executed on %s || %s", notification.ID, nTimeStamp.String(), nTimeStamp.UTC().String()))
 		h.ScheduleNotificationHandler(notification, imgUrls, gifUrls)
 	})
 	if err != nil {
@@ -367,16 +371,23 @@ func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZ
 
 func (h *Handler) ScheduleNotificationHandler(notification *models.Notification, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
 	nID := notification.ID
+	isIST := notification.NTimezone == models.NotificationNTimezoneIST
 	if err := h.RequestNotification(utils.NPartModelToNotificationReq(notification, notification.NDevice == models.NotificationNDeviceIos, imgUrls, gifUrls)); err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to request scheduled notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
 		// remove cron jobs if failed
-		h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
-		h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+		if isIST {
+			h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+		} else {
+			h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+		}
 		return
 	}
 	// remove cron jobs once completed
-	h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
-	h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+	if isIST {
+		h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+	} else {
+		h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+	}
 
 	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
 	defer cancel()

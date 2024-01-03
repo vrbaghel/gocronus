@@ -26,7 +26,7 @@ func (c *Cron) StartCron() {
 }
 
 func (c *Cron) StopCron() {
-	<-c.CST.Stop().Done()
-	<-c.IST.Stop().Done()
+	c.CST.Stop()
+	c.IST.Stop()
 	log.Println("cron stopped")
 }

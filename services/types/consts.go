@@ -7,8 +7,8 @@ import (
 
 const NOTIFICATION_TIMESTAMP_FORMAT = "2006-01-02 15:04:05"
 
-var IST_TIMEZONE = time.FixedZone("IST", int(5.5*time.Hour.Hours()*time.Hour.Seconds()))
-var CST_TIMEZONE = time.FixedZone("CST", int(-6*time.Hour.Hours()*time.Hour.Seconds()))
+var IST_TIMEZONE = time.FixedZone("IST", int(5.5*time.Hour.Seconds()))
+var CST_TIMEZONE = time.FixedZone("CST", int(-6*time.Hour.Seconds()))
 
 var NDCATEGORY_TO_CATEGORY_MAP map[string]int = map[string]int{
 	models.NotificationDataNDCategoryText:           0,
