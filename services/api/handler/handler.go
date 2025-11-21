@@ -3,6 +3,7 @@ package handler
 import (
 	"ncronus/database/mysql"
 	"ncronus/pkg/auth"
+	"ncronus/services/api/ncron"
 	"ncronus/services/store"
 	"ncronus/services/types"
 	"net/http"
@@ -30,6 +31,7 @@ type HandlerParams struct {
 	Config *HandlerConfig
 	MySql  *mysql.MySQL
 	Logger *zap.Logger
+	Cron   *ncron.Cron
 }
 
 type Handler struct {
@@ -38,6 +40,7 @@ type Handler struct {
 	mySql   *mysql.MySQL
 	store   *store.Store
 	logger  *zap.Logger
+	cron    *ncron.Cron
 }
 
 func NewHandler(handlerParams HandlerParams, store *store.Store) *Handler {
@@ -45,6 +48,7 @@ func NewHandler(handlerParams HandlerParams, store *store.Store) *Handler {
 		config:  handlerParams.Config,
 		mySql:   handlerParams.MySql,
 		logger:  handlerParams.Logger,
+		cron:    handlerParams.Cron,
 		context: map[string]string{},
 		store:   store,
 	}

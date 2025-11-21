@@ -9,11 +9,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func ValidateToken(token string, isRefresh bool) (*JWTMetadata, *AuthError) {
+func ValidateToken(token string, isRefresh bool, config AuthConfig) (*JWTMetadata, *AuthError) {
 	var secret []byte
 	var accessLevel int
 
-	jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+		if isRefresh {
+			secret = config.RefreshTokenSecret
+		} else {
+			secret = config.AccessTokenSecret
+		}
 		accessLevelF, ok := t.Header["departmentid"].(float64)
 		if !ok {
 			return nil, fmt.Errorf("invalid token code")
@@ -22,29 +27,27 @@ func ValidateToken(token string, isRefresh bool) (*JWTMetadata, *AuthError) {
 		return secret, nil
 	})
 
-	// @todo uncomment the below code once secrets are added
-	// if err != nil {
-	// 	var message string
-	// 	if err == jwt.ErrSignatureInvalid {
-	// 		message = "err : invalid signature"
-	// 	} else {
-	// 		message = "err : invalid token"
-	// 	}
-	// 	return nil, &AuthError{
-	// 		Code:    http.StatusUnauthorized,
-	// 		Status:  http.StatusText(http.StatusUnauthorized),
-	// 		Message: message,
-	// 	}
-	// }
+	if err != nil {
+		var message string
+		if err == jwt.ErrSignatureInvalid {
+			message = "err : invalid signature"
+		} else {
+			message = "err : invalid token"
+		}
+		return nil, &AuthError{
+			Code:    http.StatusUnauthorized,
+			Status:  http.StatusText(http.StatusUnauthorized),
+			Message: message,
+		}
+	}
 
-	// @todo uncomment the below code once secrets are added
-	// if !parsedToken.Valid {
-	// 	return nil, &AuthError{
-	// 		Code:    http.StatusUnauthorized,
-	// 		Status:  http.StatusText(http.StatusUnauthorized),
-	// 		Message: "invalid token",
-	// 	}
-	// }
+	if !parsedToken.Valid {
+		return nil, &AuthError{
+			Code:    http.StatusUnauthorized,
+			Status:  http.StatusText(http.StatusUnauthorized),
+			Message: "invalid token",
+		}
+	}
 
 	return &JWTMetadata{
 		AccessLevel: accessLevel,

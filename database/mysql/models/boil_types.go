@@ -54,7 +54,7 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 // Enum values for NotificationNTimezone
 const (
 	NotificationNTimezoneIST = "IST"
-	NotificationNTimezoneGMT = "GMT"
+	NotificationNTimezoneCST = "CST"
 )
 
 // Enum values for NotificationNDevice

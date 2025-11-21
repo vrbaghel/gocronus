@@ -1,25 +1,31 @@
 package types
 
+import (
+	"ncronus/database/mysql/models"
+	"time"
+)
+
 const NOTIFICATION_TIMESTAMP_FORMAT = "2006-01-02 15:04:05"
 
+var IST_TIMEZONE = time.FixedZone("IST", int(5.5*time.Hour.Seconds()))
+var CST_TIMEZONE = time.FixedZone("CST", int(-6*time.Hour.Seconds()))
+
 var NDCATEGORY_TO_CATEGORY_MAP map[string]int = map[string]int{
-	CATEGORY_TEXT:            0,
-	CATEGORY_CAROUSEL:        1,
-	CATEGORY_THUMBNAIL_IMAGE: 2,
-	CATEGORY_GIF:             3,
+	models.NotificationDataNDCategoryText:           0,
+	models.NotificationDataNDCategoryCarousel:       1,
+	models.NotificationDataNDCategoryThumbnailImage: 2,
+	models.NotificationDataNDCategoryGif:            3,
 }
 
 var NDNAVTYPE_TO_NAVTYPE_MAP map[string]int = map[string]int{
-	NAVTYPE_AITOOL:      0,
-	NAVTYPE_AIFILTER:    1,
-	NAVTYPE_AIPHOTO:     2,
-	NAVTYPE_PROFILE:     3,
-	NAVTYPE_PACK_DETAIL: 4,
+	models.NotificationDataNDNavtypeAiTool:     0,
+	models.NotificationDataNDNavtypeAiFilter:   1,
+	models.NotificationDataNDNavtypeAiPhoto:    2,
+	models.NotificationDataNDNavtypeProfile:    3,
+	models.NotificationDataNDNavtypePackDetail: 4,
 }
 
-const NOTIFICATION_DEFAULT_ACTION = "ViewImageAction"
-
-const (
-	ACCESS_SUPER   = 1
-	ACCESS_LIMITED = 5
-)
+const NOTIFICATION_ID_PARAM = "notificationID"
+const NOTIFICATION_ENV_QUERY = "env"
+const NOTIFICATION_PAGE_QUERY = "page"
+const NOTIFICATION_STATUS_QUERY = "status"

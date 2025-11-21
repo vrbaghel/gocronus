@@ -7,6 +7,7 @@ import (
 	"ncronus/pkg/env"
 	"ncronus/pkg/logger"
 	"ncronus/services/api/handler"
+	"ncronus/services/api/ncron"
 	"ncronus/services/api/server"
 	"time"
 
@@ -62,6 +63,11 @@ func (p *Process) closeSQLConnection(client *mysql.MySQL) {
 	log.Println("closed sql connection")
 }
 
+func (p *Process) initCron() *ncron.Cron {
+	cronInstance := ncron.NewCron()
+	return cronInstance
+}
+
 // // initialize http server
 func (p *Process) initHTTPServer(handlerParams handler.HandlerParams) (func(), func()) {
 	serverConfig := server.ServerConfig{
@@ -79,6 +85,9 @@ func main() {
 	handlerParams := handler.HandlerParams{}
 	// logger config
 	handlerParams.Logger = process.initLogger()
+	// cron config
+	handlerParams.Cron = process.initCron()
+	startCron, stopCron := handlerParams.Cron.StartCron, handlerParams.Cron.StopCron
 	// service config
 	handlerParams.Config = &handler.HandlerConfig{
 		API: handler.APIConfig{
@@ -101,6 +110,8 @@ func main() {
 	startHTTPServer, stopHTTPServer := process.initHTTPServer(handlerParams)
 
 	defer process.closeSQLConnection(sqlClient)
+	defer stopCron()
 	defer stopHTTPServer()
+	startCron()
 	startHTTPServer()
 }

@@ -8,38 +8,16 @@ const (
 )
 
 const (
-	NOTIFICATIONS_PER_REQ int = 20
+	NOTIFICATIONS_PER_REQ int = 10
 	PAGE_MIN              int = 1
 )
 
 const (
-	NOTIFICATION_STATUS_SCHEDULED  = "scheduled"
-	NOTIFICATION_STATUS_RUNNING    = "running"
-	NOTIFICATION_STATUS_COMPLETED  = "completed"
-	NOTIFICATION_STATUS_TERMINATED = "terminated"
+	ACCESS_SUPER   = 1
+	ACCESS_LIMITED = 5
 )
 
 const (
-	NOTIFICATION_TIMEZONE_IST = "IST"
-	NOTIFICATION_TIMEZONE_GMT = "GMT"
-)
-
-const (
-	DEVICE_IOS     = "ios"
-	DEVICE_ANDROID = "android"
-)
-
-const (
-	CATEGORY_TEXT            = "text"
-	CATEGORY_CAROUSEL        = "carousel"
-	CATEGORY_THUMBNAIL_IMAGE = "thumbnail_image"
-	CATEGORY_GIF             = "gif"
-)
-
-const (
-	NAVTYPE_AITOOL      = "ai_tool"
-	NAVTYPE_AIFILTER    = "ai_filter"
-	NAVTYPE_AIPHOTO     = "ai_photo"
-	NAVTYPE_PROFILE     = "profile"
-	NAVTYPE_PACK_DETAIL = "pack_detail"
+	NOTIFICATION_ENV_PROD int8 = 0
+	NOTIFICATION_ENV_DEV  int8 = 1
 )

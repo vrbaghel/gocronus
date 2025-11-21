@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -31,7 +32,33 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 		return
 	}
 
-	qMods := []qm.QueryMod{qm.Load(models.NotificationRels.IDNotificationDatum), qm.Limit(types.NOTIFICATIONS_PER_REQ)}
+	qMods := []qm.QueryMod{qm.Load(models.NotificationRels.IDNotificationDatum)}
+
+	// check if env query is available
+	envParam := gCtx.DefaultQuery(types.NOTIFICATION_ENV_QUERY, "-1")
+	env, err := strconv.Atoi(envParam)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Query param parsing failed for env value %s\t%s", envParam, err.Error()))
+	}
+	if int8(env) == types.NOTIFICATION_ENV_DEV {
+		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_DEV))
+	} else if int8(env) == types.NOTIFICATION_ENV_PROD {
+		qMods = append(qMods, qm.Where("is_dev = ?", types.NOTIFICATION_ENV_PROD))
+	} else {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Invalid value for for env query param %s", envParam))
+	}
+
+	// check if status query is available
+	statusParam := gCtx.Query(types.NOTIFICATION_STATUS_QUERY)
+	if statusParam != "" {
+		switch statusParam {
+		case models.NotificationNStatusCompleted, models.NotificationNStatusRunning, models.NotificationNStatusScheduled, models.NotificationNStatusTerminated:
+			qMods = append(qMods, qm.And("n_status = ?", statusParam))
+		default:
+			h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Invalid value for for status query param %s", statusParam))
+		}
+	}
+	qMods = append(qMods, qm.Limit(types.NOTIFICATIONS_PER_REQ))
 
 	// find count of total pages
 	totalNotifications, err := h.store.NotificationStore.Count(txCtx, tx, qMods...)
@@ -45,8 +72,8 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 		totalPages = 1
 	}
 
-	// do pagination if page param exists
-	pageParam := gCtx.DefaultQuery("page", "1")
+	// do pagination if page query exists
+	pageParam := gCtx.DefaultQuery(types.NOTIFICATION_PAGE_QUERY, "1")
 	page, err := strconv.Atoi(pageParam)
 	if err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : GetNotifications :: Query param parsing failed for page value %s\t%s", pageParam, err.Error()))
@@ -88,8 +115,7 @@ func (h *Handler) GetNotifications(gCtx *gin.Context) {
 
 func (h *Handler) SendNotification(gCtx *gin.Context) {
 	var reqPayload types.SendNotificationRequestPayload
-	// @todo set it to false when impemented CRON
-	sendNotificationNow := true
+	sendNotificationNow := false
 	if err := gCtx.ShouldBindJSON(&reqPayload); err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : SendNotification :: Unable to bind request body with GenerateImgResponse %s", err.Error()))
 		gCtx.JSON(http.StatusBadRequest, types.APIError{
@@ -99,7 +125,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		})
 		return
 	}
-	isIos := reqPayload.Device == types.DEVICE_IOS
+	isIos := reqPayload.Device == models.NotificationNDeviceIos
 
 	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
 	defer cancel()
@@ -113,31 +139,45 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 	notification := models.Notification{
 		NAction: reqPayload.Action,
 		NDevice: reqPayload.Device,
-		NStatus: types.NOTIFICATION_STATUS_SCHEDULED,
+	}
+	if reqPayload.Env == 0 {
+		notification.IsDev = types.NOTIFICATION_ENV_PROD
+	} else {
+		notification.IsDev = types.NOTIFICATION_ENV_DEV
 	}
 	if reqPayload.Timezone != "" {
 		notification.NTimezone = reqPayload.Timezone
 	} else {
-		notification.NTimezone = types.NOTIFICATION_TIMEZONE_GMT
+		notification.NTimezone = models.NotificationNTimezoneIST
 	}
 
+	var isISTZone bool = notification.NTimezone == models.NotificationNTimezoneIST
+
 	if reqPayload.ScheduledFor != "" {
-		scheduledFor, err := time.Parse(types.NOTIFICATION_TIMESTAMP_FORMAT, reqPayload.ScheduledFor)
+		var scheduledFor time.Time
+		var err error
+		if isISTZone {
+			scheduledFor, err = time.ParseInLocation(types.NOTIFICATION_TIMESTAMP_FORMAT, reqPayload.ScheduledFor, types.IST_TIMEZONE)
+		} else {
+			scheduledFor, err = time.ParseInLocation(types.NOTIFICATION_TIMESTAMP_FORMAT, reqPayload.ScheduledFor, types.CST_TIMEZONE)
+		}
 		if err != nil {
 			h.logger.Error(fmt.Sprintf("NotificationHandler : SendNotification :: Failed to parse timestamp for scheduling notification %s\t%s", reqPayload.ScheduledFor, err.Error()))
+			gCtx.JSON(http.StatusBadRequest, types.APIError{
+				Code:    http.StatusBadRequest,
+				Status:  http.StatusText(http.StatusBadRequest),
+				Message: "invalid value for scheduled_for",
+			})
+			return
 		}
-		if notification.NTimezone == types.NOTIFICATION_TIMEZONE_IST {
-			istSeconds := int(5.5 * time.Hour.Hours() * time.Hour.Seconds())
-			istZone := time.FixedZone("IST Time", istSeconds)
-			notification.NTimestamp = scheduledFor.In(istZone)
-		} else {
-			notification.NTimestamp = scheduledFor.UTC()
-		}
+		notification.NStatus = models.NotificationNStatusScheduled
+		notification.NTimestamp = scheduledFor
 	} else {
-		notification.NTimestamp = time.Now().UTC()
+		notification.NStatus = models.NotificationNStatusCompleted
+		notification.NTimestamp = time.Now().In(types.IST_TIMEZONE)
 		sendNotificationNow = true
+		// h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: scheduledNow %+v", notification.NTimestamp))
 	}
-	// h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: scheduledFor %+v", notification.NTimestamp))
 
 	if err := h.store.NotificationStore.Insert(txCtx, tx, &notification); err != nil {
 		h.logger.Error(fmt.Sprintf("NotificationHandler : SendNotification :: Failed to insert notification for request %s\t%s", gCtx.Request.URL.String(), err.Error()))
@@ -149,14 +189,8 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 		nData := models.NotificationDatum{
 			NDSource:      0,
 			NDClickAction: null.StringFrom(reqPayload.ClickAction),
+			NDUUID:        notification.ID,
 		}
-		nUuid, err := strconv.Atoi(fmt.Sprintf("%d%d%d%d", notification.ID, notification.ID+1, notification.ID+2, notification.ID+3))
-		if err != nil {
-			h.logger.Error(fmt.Sprintf("NotificationHandler : SendNotification :: Failed to create UUID for notification data for request %s\t%s", gCtx.Request.URL.String(), err.Error()))
-			h.InternalServerError(gCtx)
-			return
-		}
-		nData.NDUUID = nUuid
 
 		if reqPayload.Category != nil {
 			nData.NDCategory = reqPayload.Category.Type
@@ -174,7 +208,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 			return
 		}
 
-		if reqPayload.Category != nil {
+		if reqPayload.Category != nil && reqPayload.Category.Data != nil {
 			if reqPayload.Category.Data.ImageURLs != nil {
 				nImgUrls := utils.NotificationImgUrlsToNIUModel(reqPayload.Category.Data.ImageURLs)
 				if err := nData.AddNDNotificationImgUrls(txCtx, tx, true, nImgUrls...); err != nil {
@@ -193,7 +227,7 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 			}
 		}
 
-		if reqPayload.Navigation != nil {
+		if reqPayload.Navigation != nil && reqPayload.Navigation.Data != nil {
 			nPackData := models.NotificationPack{
 				NPID:       null.StringFrom(reqPayload.Navigation.Data.PackageID),
 				NPName:     null.StringFrom(reqPayload.Navigation.Data.PackageName),
@@ -223,26 +257,163 @@ func (h *Handler) SendNotification(gCtx *gin.Context) {
 	}
 
 	if sendNotificationNow {
-		h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: Scheduled for now? %t%d", sendNotificationNow, notification.ID))
-		if err := h.RequestNotification(&notification, isIos); err != nil {
+		// h.logger.Info(fmt.Sprintf("NotificationHandler : SendNotification :: Scheduled for now? %t%d", sendNotificationNow, notification.ID))
+		if err := h.RequestNotification(utils.NModelToNotificationReq(&notification, isIos)); err != nil {
 			h.logger.Error(err.Error())
 			h.InternalServerError(gCtx)
 			return
 		}
+	} else {
+		go h.ScheduleNotification(&notification, isISTZone, notification.R.IDNotificationDatum.R.NDNotificationImgUrls, notification.R.IDNotificationDatum.R.NDNotificationGifUrls)
 	}
 
 	gCtx.Status(http.StatusOK)
 }
 
-func (h *Handler) RequestNotification(notification *models.Notification, isIos bool) error {
+func (h *Handler) TerminateNotification(gCtx *gin.Context) {
+	nID, err := strconv.ParseInt(gCtx.Param(types.NOTIFICATION_ID_PARAM), 10, 64)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Invalid notificationID format %s", err.Error()))
+		gCtx.JSON(http.StatusBadRequest, types.APIError{
+			Code:    http.StatusBadRequest,
+			Status:  http.StatusText(http.StatusBadRequest),
+			Message: "invalid id format",
+		})
+		return
+	}
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(gCtx, nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Unable to begin sql transaction for request URL %s\t%s", gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+
+	notification, err := h.store.NotificationStore.GetByID(txCtx, tx, int(nID))
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: notificationID does not exist %s", err.Error()))
+		gCtx.JSON(http.StatusNotFound, types.APIError{
+			Code:    http.StatusNotFound,
+			Status:  http.StatusText(http.StatusBadRequest),
+			Message: "notification ID not found",
+		})
+		return
+	}
+
+	nCronJobId := notification.CronJobID.Int
+	if nCronJobId > 0 && notification.NStatus == models.NotificationNStatusScheduled {
+		notification.NStatus = models.NotificationNStatusTerminated
+		notification.CronJobID = null.IntFrom(0)
+		if notification.NTimezone == models.NotificationNTimezoneIST {
+			h.cron.IST.Remove(cron.EntryID(nCronJobId))
+		} else {
+			h.cron.CST.Remove(cron.EntryID(nCronJobId))
+		}
+	}
+
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Failed to terminate notification %d for request %s\t%s", nID, gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : TerminateNotification :: Unable to commit SQL transaction for request %s\t%s", gCtx.Request.URL.String(), err.Error()))
+		h.InternalServerError(gCtx)
+		return
+	}
+}
+
+func (h *Handler) ScheduleNotification(notification *models.Notification, isISTZone bool, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
+	var nTimeStamp time.Time
+	var scheduler *cron.Cron
+	if isISTZone {
+		nTimeStamp = notification.NTimestamp.In(types.IST_TIMEZONE)
+		scheduler = h.cron.IST
+	} else {
+		nTimeStamp = notification.NTimestamp.In(types.CST_TIMEZONE)
+		scheduler = h.cron.CST
+	}
+	nID := notification.ID
+	day := nTimeStamp.Day()
+	month := nTimeStamp.Month()
+	hour := nTimeStamp.Hour()
+	minute := nTimeStamp.Minute()
+	h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Notification with ID %d scheduled for %s || %s", nID, nTimeStamp.String(), nTimeStamp.UTC().String()))
+
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
+	cronExpression := fmt.Sprintf("%d %d %d %d *", minute, hour, day, month)
+	jobId, err := scheduler.AddFunc(cronExpression, func() {
+		h.logger.Info(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Notification with ID %d executed on %s || %s", notification.ID, nTimeStamp.String(), nTimeStamp.UTC().String()))
+		h.ScheduleNotificationHandler(notification, imgUrls, gifUrls)
+	})
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to schedule notification for cron job scheduled at %s for notification %d\t%s", cronExpression, nID, err.Error()))
+	}
+
+	notification.CronJobID = null.IntFrom(int(jobId))
+	notification.NStatus = models.NotificationNStatusScheduled
+
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Failed to update notification %d with cron job ID %d\t%s", nID, jobId, err.Error()))
+	}
+
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotification :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
+}
+
+func (h *Handler) ScheduleNotificationHandler(notification *models.Notification, imgUrls models.NotificationImgURLSlice, gifUrls models.NotificationGifURLSlice) {
+	nID := notification.ID
+	isIST := notification.NTimezone == models.NotificationNTimezoneIST
+	if err := h.RequestNotification(utils.NPartModelToNotificationReq(notification, notification.NDevice == models.NotificationNDeviceIos, imgUrls, gifUrls)); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to request scheduled notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
+		// remove cron jobs if failed
+		if isIST {
+			h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+		} else {
+			h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+		}
+		return
+	}
+	// remove cron jobs once completed
+	if isIST {
+		h.cron.IST.Remove(cron.EntryID(notification.CronJobID.Int))
+	} else {
+		h.cron.CST.Remove(cron.EntryID(notification.CronJobID.Int))
+	}
+
+	txCtx, cancel := context.WithTimeout(context.Background(), types.TIMEOUT_TRANSACTION_SHORT)
+	defer cancel()
+	tx, err := h.mySql.Client.BeginTx(context.Background(), nil)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to begin sql transaction for notification cron job %d\t%s", nID, err.Error()))
+		return
+	}
+	notification.NStatus = models.NotificationNStatusCompleted
+	if err := h.store.NotificationStore.Update(txCtx, tx, notification); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Failed to update notification %d with cron job ID %d\t%s", nID, notification.CronJobID.Int, err.Error()))
+	}
+	if err := tx.Commit(); err != nil {
+		h.logger.Error(fmt.Sprintf("NotificationHandler : ScheduleNotificationHandler :: Unable to commit SQL transaction for notification cron job %d\t%s", nID, err.Error()))
+	}
+}
+
+func (h *Handler) RequestNotification(nPayload types.RequestNotificationPayload) error {
 	client := &http.Client{
 		Timeout: types.TIMEOUT_TRANSACTION_SHORT,
 	}
-	reqPayload, err := json.Marshal(utils.NModelToNotificationReq(notification, isIos))
+	reqPayload, err := json.Marshal(nPayload)
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: Unable to marshall json for notification request %s", err.Error())
 	}
-	h.logger.Info(fmt.Sprintf("NotificationHandler : RequestNotification :: Req payload %+v", string(reqPayload)))
+	// h.logger.Info(fmt.Sprintf("NotificationHandler : RequestNotification :: Req payload %+v", string(reqPayload)))
 	req, err := http.NewRequest(http.MethodPost, h.config.Notification.BaseURL, bytes.NewBuffer(reqPayload))
 	if err != nil {
 		return fmt.Errorf("NotificationHandler : RequestNotification :: http post request failed for notification request %s", err.Error())

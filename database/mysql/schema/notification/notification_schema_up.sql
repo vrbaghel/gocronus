@@ -1,7 +1,7 @@
 CREATE TABLE `notification` (
   id INT NOT NULL UNIQUE AUTO_INCREMENT,
   n_action VARCHAR(100) NOT NULL,
-  n_timezone ENUM('IST', 'GMT') NOT NULL,
+  n_timezone ENUM('IST', 'CST') NOT NULL,
   n_timestamp TIMESTAMP NOT NULL,
   n_device ENUM('ios', 'android') NOT NULL,
   n_status ENUM(
@@ -10,6 +10,8 @@ CREATE TABLE `notification` (
     'completed',
     'terminated'
   ) NOT NULL,
+  cron_job_id INT,
+  is_dev TINYINT NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

@@ -10,12 +10,11 @@ import (
 func RegisterEndpoints(routineEngine *gin.Engine, handlerParams handler.HandlerParams) {
 	store := store.NewStore()
 	handler := handler.NewHandler(handlerParams, store)
+	// restart pending CRON jobs
+	handler.RestartCronJobs()
+
 	routineEngine.GET("/", handler.ServeBaseRequest)
-
 	api := routineEngine.Group("api")
-	// login API
-	// api.POST("/user/login", handler.Login)
-
 	notification := api.Group("notification", handler.AuthMiddleware)
 	// get actions
 	notification.GET("/actions", handler.GetNotiticationActions)
@@ -23,4 +22,6 @@ func RegisterEndpoints(routineEngine *gin.Engine, handlerParams handler.HandlerP
 	notification.GET("/all", handler.GetNotifications)
 	// send notification
 	notification.POST("/send", handler.SendNotification)
+	// terminate notification
+	notification.DELETE("/:notificationID", handler.TerminateNotification)
 }
